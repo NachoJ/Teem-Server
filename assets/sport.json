@@ -1,0 +1,22 @@
+[
+    {
+       "sporttitle":"All",
+       "sportimage":"",
+       "sportkey":"all"     
+    },
+    {
+       "sporttitle":"Soccer",
+       "sportimage":"",
+       "sportkey":"soccer"     
+    },
+    {
+       "sporttitle":"Padel",
+       "sportimage":"",
+       "sportkey":"padel"     
+    },
+    {
+       "sporttitle":"Basketball",
+       "sportimage":"",
+       "sportkey":"basketball"     
+    }
+]

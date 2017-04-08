@@ -74,7 +74,23 @@ module.exports = {
 			type: 'datetime'
 		},
 		activateddate: {
-			type: 'datetime'
+			type: 'datetime',
+		},
+		dob:{
+			type:'datetime',
+			defaultsTo:""
+		},
+		city:{
+			type:'string',
+			defaultsTo:""
+		},
+		description:{
+			type:'string',
+			defaultsTo:""
+		},
+		sports:{
+			type:'string',
+			defaultsTo:""
 		},
 		/**
 		 * Get user's full name

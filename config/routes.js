@@ -83,6 +83,10 @@ module.exports.routes = {
 		controller:"SportcenterController",
 		action:"UpdateSportcenter"
 	},
+	"get /sportcenter/autocomplete/:text":{
+		controller:"SportcenterController",
+		action:"AutocompleteSearch"
+	},
 
 
 	"post /field":{
@@ -96,6 +100,10 @@ module.exports.routes = {
 	"get /field/:id":{
 		controller:"FieldsController",
 		action:"SingleFieldDisplay"
+	},
+	"get /field/sportcenter/:scid":{
+		controller:"FieldsController",
+		action:"SportcenterFieldDisplay"
 	},
 	"delete /field/:id":{
 		controller:"FieldsController",
@@ -119,6 +127,10 @@ module.exports.routes = {
 		controller:"MatchController",
 		action:"SingleMatchDisplay"
 	},
+	"post /match/nearby":{
+		controller:"MatchController",
+		action:"FindNearByMatch"
+	},
 	"delete /match/:id":{
 		controller:"MatchController",
 		action:"DeleteMatch"
@@ -126,7 +138,39 @@ module.exports.routes = {
 	"put /match":{
 		controller:"MatchController",
 		action:"UpdateMatch"
+	},
+
+
+	"get /sport":{
+		controller:"SportsController",
+		action:"getSport"
+	},
+	"get /sport/:key":{
+		controller:"SportsController",
+		action:"getSportByKey"
+	},
+
+
+	"get /currency":{
+		controller:"CurrencyController",
+		action:"getCurrency"
+	},
+	"get /currency/:key":{
+		controller:"CurrencyController",
+		action:"getCurrencyByKey"
+	},
+
+
+	"post /profile":{
+		controller:"UserController",
+		action:"ProfileUpdate"
+	},
+
+	"post /profile/image/:userid":{
+		controller:"UserController",
+		action:"profileImageUpload"
 	}
+	
 	
 
 	/***************************************************************************

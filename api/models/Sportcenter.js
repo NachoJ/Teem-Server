@@ -22,11 +22,11 @@ module.exports = {
             required: true
         },
         lat:{
-            type:'string',
+            type:'float',
             required:true
         },
         long:{
-            type:'string',
+            type:'float',
             required:true
         }
     },

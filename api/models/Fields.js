@@ -13,12 +13,12 @@ module.exports = {
             required: true
         },
         lights:{
-            type:'string',
+            type:'boolean',
+            enum:[true,false],
             required: true
         },
         surface:{
-            type:'boolean',
-            enum:[true,false],
+            type:'string',
             required: true
         },
         sport:{

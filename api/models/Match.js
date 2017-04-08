@@ -15,14 +15,10 @@ module.exports = {
         },
         address:{
             type:'string',
-            required:true
+            defaultsTo:""
         },
-        lat:{
-            type:'string',
-            required:true
-        },
-        long:{
-            type:'string',
+        coordinates: {
+            type: "json",
             required:true
         },
         sport:{
@@ -39,7 +35,7 @@ module.exports = {
         },
         paymenttype:{
             type:'string',
-            enum:['free','online','atthatpitch'],
+            enum:['free','online','atthepitch'],
             required:true
         },
         currency:{
@@ -61,9 +57,6 @@ module.exports = {
         fieldid: {
 			required: 'Fieldid is required'
 		},
-        address: {
-			required: 'Address is required'
-		},
         sport: {
 			required: 'Sport is required'
 		},
@@ -82,5 +75,7 @@ module.exports = {
         paymenttype:{
             required: 'Paymenttype  is required'
         }
-   }     
+   }
+   
+     
 };

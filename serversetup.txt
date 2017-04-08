@@ -64,3 +64,13 @@ replace this to /etc/apache2/apache2.conf
     AllowOverride All  //------ this will be none and should be All
     Require all granted
 </Directory>
+
+
+//------------
+sudo a2enmod mod_xml2enc
+sudo a2enmod proxy_http xml2enc
+
+sudo a2enmod proxy
+sudo a2enmod ssl
+
+sudo a2enmod proxy_wstunnel

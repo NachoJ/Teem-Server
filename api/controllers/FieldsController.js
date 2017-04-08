@@ -158,5 +158,22 @@ module.exports = {
                 }
                 res.send({message: "Field update  successfully"});
             });
-    }
+    },
+    SportcenterFieldDisplay: function (req, res) {
+        var scid = req.param("scid");
+
+        Fields.find({scid: scid}).exec(function (err, filedData) {
+                if (err) {
+                    res.serverError(err);
+                    return;
+                }
+                if (filedData.length == 0) {
+                    res.badRequest({error: "This Field id not found in our database"});
+                    return;
+                }
+
+                res.send({data: filedData});
+
+            });
+    },
 };

@@ -91,6 +91,8 @@ module.exports = {
 	siteName: "Teem Players",
 	paths: {
     public: __dirname + "/../assets",
-	userImageUploadPath: '../../assets/upload/profiles'
+	userImageUploadPath: '../../assets/upload/profiles',
+	sportFile: __dirname + "/../assets/sport.json",
+	currencyFile: __dirname + "/../assets/currency.json"
   },
 };

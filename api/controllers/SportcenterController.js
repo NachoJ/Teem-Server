@@ -113,5 +113,20 @@ module.exports = {
                 }
                 res.send({message: "Sportcenter update  successfully"});
             });
+    },
+
+    AutocompleteSearch:function(req,res){
+        var text=req.param("text");
+
+        Sportcenter.find({$or:[{name: new RegExp(text,'i') },{address:new RegExp(text,'i')}]})
+            .exec(function(err,result){
+                if(err)
+                    return res.serverError(err);
+
+              if(result.length==0)
+                return res.badRequest({error:'Sportcenter not exists'});
+
+                res.send(result);
+        });
     }
 };
