@@ -25,12 +25,10 @@ module.exports = {
     profileImageUpload: function (req, res) {
 
         var userid =req.param("userid");
-        console.log('reqData',userid);
-		var reqData={};
+      	var reqData={};
 		
         var folderPath = sails.config.paths.public;
         var imagePath = folderPath + '/upload/profiles';
-       console.log('profile : ',req.file('profile'));
         var origifilename = req.file('profile')._files[0].stream.filename;
         
         var newfilename = moment().utc().unix() + "_" + origifilename;

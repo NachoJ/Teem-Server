@@ -21,11 +21,13 @@ module.exports = {
 	attributes: {
 
 		firstname: {
-			type: 'string'
+			type: 'string',
+			defaultsTo: ""
 		},
 
 		lastname: {
-			type: 'string'
+			type: 'string',
+			defaultsTo: ""
 		},
 		profileimage: {
 			type: 'string',
@@ -47,10 +49,12 @@ module.exports = {
 		},
 		fbid: {
 			type: 'string',
-			unique: true
+			unique: true,
+			defaultsTo:""
 		},
 		encryptedpassword: {
-			type: 'string'
+			type: 'string',
+			defaultsTo:""
 		},
 
 		isactive: {
@@ -106,8 +110,8 @@ module.exports = {
 
 		toJSON: function() {
 			var user = this.toObject();
-			delete user.password;
 			delete user.encryptedpassword;
+			delete user.password;
 			delete user.sessionTokens;
 			delete user._csrf;
 			return user;
@@ -118,8 +122,13 @@ module.exports = {
 		 */
 
 		validatePassword: function(candidatePassword, cb) {
+			console.log("candidatePassword",candidatePassword);
+			console.log("encandidatePassword",this.encryptedpassword);
+
 			bcrypt.compare(candidatePassword, this.encryptedpassword, function(err, valid) {
 				if (err) return cb(err);
+
+				console.log("valid",valid);
 				cb(null, valid);
 			});
 		},
@@ -208,7 +217,32 @@ module.exports = {
 					cb(err, res, msg, "token");
 				});
 			});
-		}
+		},
+		sendInvitationEmail: function(user,inviteruser,cb) {
+			var self = this;
+
+			// Send email
+			var email = new Email._model({
+				to: {
+					name: user.username,
+					email: user.email
+				},
+				subject: "Teem web Invitation email",
+				data: {
+					fullname: user.username,
+					invitationmsg:inviteruser.username+" has invite to join the match"
+				},
+				tags: ['invitation', 'invitational'],
+				template: 'invitation'
+			});
+
+			email.setDefaults();
+
+			email.send(function(err, res, msg) {
+				cb(err, res, msg, "token");
+			});
+			// });
+		}   
 
 	},
 
@@ -231,8 +265,9 @@ module.exports = {
 	beforeCreate: [
 		// Encrypt user's password
 		function(values, cb) {
+			
 			if(!values.fbid){
-				if (!values.password ) {
+				if (!values.encryptedpassword ) {
 					return cb({
 						err: "Password required!"
 					});
@@ -260,7 +295,10 @@ module.exports = {
 	beforeUpdate: [
 		// Encrypt user's password, if changed
 		function(values, cb) {
-			if (!values.password) {
+			console.log("upfate password",values);
+
+			if (!values.encryptedpassword) {
+			//	console.log("not update password",values);
 				return cb();
 			}
 
@@ -275,8 +313,11 @@ module.exports = {
 	 */
 
 	encryptPassword: function(values, cb) {
-		bcrypt.hash(values.password, 10, function(err, encryptedpassword) {
+			
+		bcrypt.hash(values.encryptedpassword, 10, function(err, encryptedpassword) {
 			if (err) return cb(err);
+
+			console.log("values",encryptedpassword);
 			values.encryptedpassword = encryptedpassword;
 			cb();
 		});

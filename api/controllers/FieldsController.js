@@ -6,7 +6,7 @@ module.exports = {
         var insertArr = [];
         var updateArr = [];
         var dataObj;
-
+        console.log(reqData,"reqData");
         insertOrUpdateData = reqData.fields;
         deleteData = reqData.deleteids;
 

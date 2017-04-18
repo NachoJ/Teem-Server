@@ -13,8 +13,8 @@ module.exports = {
             required: true
         },
         lights:{
-            type:'boolean',
-            enum:[true,false],
+            type:'string',
+            enum:['yes','no'],
             required: true
         },
         surface:{

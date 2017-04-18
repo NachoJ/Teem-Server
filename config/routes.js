@@ -61,7 +61,11 @@ module.exports.routes = {
 		controller: "AuthController",
 		action: "ResetPassword",
 	},
-
+	"post /auth/updatepassword": {
+		controller: "AuthController",
+		action: "UpdatePassword",
+	},
+	
 
 	"post /sportcenter":{
 		controller:"SportcenterController",
@@ -123,6 +127,10 @@ module.exports.routes = {
 		controller:"MatchController",
 		action:"ListMatch"
 	},
+	"get /match/user/:id":{
+		controller:"MatchController",
+		action:"ListMatchByUser"
+	},
 	"get /match/:id":{
 		controller:"MatchController",
 		action:"SingleMatchDisplay"
@@ -138,6 +146,14 @@ module.exports.routes = {
 	"put /match":{
 		controller:"MatchController",
 		action:"UpdateMatch"
+	},
+	"post /match/join":{
+		controller:"MatchController",
+		action:"JoinMatch"
+	},
+	"delete /match/:userid/:matchid":{
+		controller:"MatchController",
+		action:"LeaveMatch"
 	},
 
 
@@ -161,16 +177,56 @@ module.exports.routes = {
 	},
 
 
+	"get /sportplayer":{
+		controller:"SportsController",
+		action:"getSportPlayer"
+	},
+	"get /sportplayer/:key":{
+		controller:"SportsController",
+		action:"getSportPlayerByKey"
+	},
+
+
 	"post /profile":{
 		controller:"UserController",
 		action:"ProfileUpdate"
 	},
-
 	"post /profile/image/:userid":{
 		controller:"UserController",
 		action:"profileImageUpload"
-	}
+	},
+
+
+	"post /invitation":{
+		controller:"InvitationController",
+		action:"createInvitation"
+	},
+	"delete /invitation/:id":{
+		controller:"InvitationController",
+		action:"DeleteInvitation"
+	},
+	"get /invitation/search/:id":{
+		controller:"InvitationController",
+		action:"invitationList"
+	},
+	"get /invitation/usersearch/:text/:id":{
+		controller:"InvitationController",
+		action:"userSearchList"
+	},
+	"get /invitation/accept/:id/:invitationid":{
+		controller:"InvitationController",
+		action:"acceptInvitationByUser"
+	},
 	
+
+	"post /changeemail":{
+		controller: "EmailchangeController",
+		action: "CreateEmail",
+	},
+	"get /changeemail/:activationlink":{
+		controller: "EmailchangeController",
+		action: "UpdateEmail",
+	}
 	
 
 	/***************************************************************************
