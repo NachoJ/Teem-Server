@@ -1,10 +1,22 @@
 [
     {
-        "currencytitle":"Doller",
-        "currencykey":"doller"
+        "currencytitle":"EUR",
+        "currencykey":"eur"
     },
     {
-        "currencytitle":"Pound",
-        "currencykey":"pound"
+        "currencytitle":"USD",
+        "currencykey":"usd"
+    },
+    {
+        "currencytitle":"GBP",
+        "currencykey":"gbp"
+    },
+    {
+        "currencytitle":"SEK",
+        "currencykey":"sek"
+    },
+    {
+        "currencytitle":"AUD",
+        "currencykey":"aud"
     }
 ]

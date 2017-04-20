@@ -180,6 +180,22 @@ module.exports = {
                             }
                         },
                         {
+                            $lookup: {
+                                from: "subsport",
+                                localField: "matchdetail.subsportid",
+                                foreignField: "_id",
+                                as: "matchdetail.subsport",
+                            }
+                        },
+                         {
+                            $lookup: {
+                                from: "sport",
+                                localField: "matchdetail.sport",
+                                foreignField: "_id",
+                                as: "matchdetail.sportdetail",
+                            }
+                        },
+                        {
                             $group: {
                                 _id: "$_id",
                                 matchid: { $first: "$matchid" },
@@ -271,7 +287,7 @@ module.exports = {
                                 invitation.forEach(function (invite) {
                                     var matchid = invite.matchid
 
-                                    if (rid+"" == matchid+"") {
+                                    if (rid + "" == matchid + "") {
                                         invite.totalmatchplayer = index['count'];
                                     }
                                 });
@@ -315,22 +331,38 @@ module.exports = {
 
         async.series([
             function (userCb) {
-                Invitation.findOne({ $and: [{ userid: userid }, { id: invitaionid }] }).populate('matchid').exec(function (err, result) {
-                    if (err)
-                        return res.serverError(err);
+                Invitation.findOne({ $and: [{ userid: userid }, { id: invitaionid }] })
+                    .then(function (invite) {
+                        var match = Match.findOneById(invite.matchid).populate("subsportid")
+                            .then(function (match) {
+                                return match;
+                            });
+                        return [invite, match]
+                    })
+                    .spread(function (invite, match) {
+                        invite = invite.toObject();
+                        invite.matchdetail = match;
+                        invitationData = invite;
+                        userCb();
+                    });
 
-                    if (typeof result == "undefined")
-                        return userCb({ error: "Invitation not exists" });
+                // Invitation.findOne({ $and: [{ userid: userid }, { id: invitaionid }] }).populate('matchid').exec(function (err, result) {
+                //     if (err)
+                //         return res.serverError(err);
 
-                    invitationData = result;
-                    userCb();
-                });
+                //     if (typeof result == "undefined")
+                //         return userCb({ error: "Invitation not exists" });
+
+                //     invitationData = result;
+                //     userCb();
+                // });
             },
             function (teamCountCb) {
-                var matchId = invitationData.matchid.id;
-                var totalPlayer = invitationData.matchid.benchplayers + invitationData.matchid.benchplayers;
-                console.log("totalPlayer", totalPlayer);
-                console.log("invitationData", invitationData);
+                var matchId = invitationData.matchid;
+                var totalPlayer = invitationData.matchdetail.subsportid.value + invitationData.matchdetail.subsportid.value;
+                //  totalPlayer=4;
+                // console.log("totalPlayer", totalPlayer);
+                // console.log("invitationData", invitationData);
                 Team.count({ $and: [{ matchid: matchId }] }).exec(function (err, matchTotalResult) {
                     if (err)
                         return res.serverError(err);
@@ -342,12 +374,14 @@ module.exports = {
                 });
             },
             function (teamFindCb) {
-                var matchId = invitationData.matchid.id;
+                var matchId = invitationData.matchid;
                 Team.count({ $and: [{ matchid: matchId }, { teamid: 1 }] }).exec(function (err, matchResult) {
                     if (err)
                         return res.serverError(err);
 
-                    if (matchResult < invitationData.matchid.benchplayers) {
+                    //invitationData.matchdetail.subsportid.value=2;    
+                    console.log("matchResult", matchResult);
+                    if (matchResult < invitationData.matchdetail.subsportid.value) {
                         teamObj = {
                             userid: userid,
                             matchid: matchId,
@@ -359,7 +393,8 @@ module.exports = {
                             if (err)
                                 return res.serverError(err);
 
-                            if (resultMatch < invitationData.matchid.benchplayers) {
+                            //  invitationData.matchdetail.subsportid.value=2;
+                            if (resultMatch < invitationData.matchdetail.subsportid.value) {
                                 teamObj = {
                                     userid: userid,
                                     matchid: matchId,

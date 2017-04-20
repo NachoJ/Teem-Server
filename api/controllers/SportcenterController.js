@@ -27,8 +27,10 @@ module.exports = {
                         return;
                     }
                     if (sportData) {
-                        dataObj = {
-                            "message": "Sportcenter create successfully"
+                        dataObj = { data:{
+                            message: "Sportcenter create successfully",
+                            data:sportData
+                        }
                         }
                         sportCb();
                     }
@@ -133,7 +135,7 @@ module.exports = {
             function (matchCb) {
                // console.log("scData.id",scData[0].id);
                if(findmatch.length==0){
-                   console.log("match");
+                   //console.log("match");
                    matchCb();
                    return;
                }

@@ -22,8 +22,12 @@ module.exports = {
             required:true
         },
         sport:{
-            type:'string',
+           model:"sport",
             required:true
+        },
+        subsportid:{
+            model:"subsport",
+            required:true,
         },
         benchplayers:{
             type:'integer',
@@ -58,8 +62,11 @@ module.exports = {
 			required: 'Fieldid is required'
 		},
         sport: {
-			required: 'Sport is required'
+			required: 'Sport id is required'
 		},
+        subsportid:{
+            required: 'Subsport id is required'
+        },
         lat: {
 			required: 'Lat is required'
 		},
@@ -75,7 +82,30 @@ module.exports = {
         paymenttype:{
             required: 'Paymenttype  is required'
         }
-   }
+   },
+    beforeDestroy: function (criteria, next){
+        // Viewfoo.findOneById(criteria.where.id).exec(function (err, viewfooData) {
+        //     ContainerImage.destroy({viewfooid: criteria.where.id}).exec(function (err, imgdata) {
+        //         if (err) {
+        //             next("not found");
+        //         }
+        //         var file=viewfooData.userid + '/' + viewfooData.id + '/';
+        //         fileuploadService.deleteFiles(file, function (filename, log) {
+        //             if (filename.status == false) {
+        //             }
+        //         });
+        //         //console.log("containermimg", imgdata);
+        //         Container.destroy({viewfooid: criteria.where.id}).exec(function (err, container) {
+        //         if (err) {
+        //             next("not found");
+        //         }
+        //         //console.log("container", container);
+        //     });
+        //     next();
+        //     });
+
+        // });
+    }
    
      
 };

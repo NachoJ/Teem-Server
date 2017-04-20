@@ -161,10 +161,27 @@ module.exports.routes = {
 		controller:"SportsController",
 		action:"getSport"
 	},
-	"get /sport/:key":{
+	"get /sport/:sportid":{
 		controller:"SportsController",
 		action:"getSportByKey"
 	},
+	"post /sport":{
+		controller:"SportsController",
+		action:"CreateSport"
+	},
+	"post /subsport":{
+		controller:"SportsController",
+		action:"CreateSubsport"
+	},
+	"post /subsport/list":{
+		controller:"SportsController",
+		action:"SubsportList"
+	},
+	"get /subsport":{
+		controller:"SportsController",
+		action:"getSubsport"
+		
+	},		
 
 
 	"get /currency":{

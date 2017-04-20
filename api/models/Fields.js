@@ -32,6 +32,10 @@ module.exports = {
         scid:{
             model:'sportcenter',
             required: true
+        },
+        sportname:{
+           type:'string',
+            defaultsTo:""
         }
     },
      validationMessages: { 

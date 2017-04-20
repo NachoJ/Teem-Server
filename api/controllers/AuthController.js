@@ -1,4 +1,6 @@
 var bcrypt = require('bcrypt');
+var moment = require('moment');
+
 module.exports = {
 	Login: function (req, res) {
 		var loginData = eval(req.body);
@@ -120,7 +122,8 @@ module.exports = {
 		var fbid = registerData.fbid;
 		var username = registerData.username;
 		var profileImage = registerData.profileimage;
-
+		if(registerData.dob!="")
+			 registerData.dob = moment(new Date(registerData.dob)).toISOString();
 
 		async.series([
 			function (usersCb) {
@@ -146,7 +149,7 @@ module.exports = {
 							user.profileimage = filename.image;
 							user.save();
 							userData = {
-								message: "Registered successfully. Please check your email to activate and login.",
+								message: "Facebook login successfully.",
 								data: user
 							};
 							usersCb(null, user);
@@ -154,7 +157,7 @@ module.exports = {
 					}
 					else {
 						userData = {
-							message: "Registered successfully. Please check your email to activate and login.",
+							message: "Facebook login successfully.",
 							data: user
 						};
 						usersCb(null, user);

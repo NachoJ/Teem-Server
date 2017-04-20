@@ -58,7 +58,7 @@ module.exports.connections = {
   ***************************************************************************/
   mongo: {
     adapter: 'sails-mongo',
-    host: '192.168.0.30',
+    host: 'localhost',
     port: 27017,
     user: 'teemweb', //optional
     password: 'teem12345', //optional

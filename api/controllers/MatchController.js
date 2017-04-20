@@ -6,7 +6,7 @@ module.exports = {
         var reqData = eval(req.body);
         var dataObj;
         var sportDetail, fieldDetail;
-
+      
         async.series([
             function (scCb) {
                 Sportcenter.findOneById(reqData.scid).exec(function (err, scData) {
@@ -42,12 +42,12 @@ module.exports = {
             },
             function (matchCb) {
                 reqData.coordinates = [parseFloat(sportDetail.long), parseFloat(sportDetail.lat)];
-                reqData.sport = fieldDetail.sport;
+                //reqData.sport = fieldDetail.sport;
                 reqData.matchtime = new Date(reqData.matchtime).toISOString();
 
                 Match.create(reqData).exec(function (err, matchData) {
                     if (err) {
-                       
+
                         var errmsg = [];
                         if (err.Errors) {
                             var arrErrors = err.Errors;
@@ -257,6 +257,7 @@ module.exports = {
         var reqData = eval(req.body);
         var sendResult;
         var sport = reqData.sport;
+        var matchId = [];
         var conditions = {
             long: parseFloat(reqData.long) || 0,
             lat: parseFloat(reqData.lat) || 0,
@@ -269,6 +270,8 @@ module.exports = {
                     nearCb();
                     return;
                 }
+                sport = new ObjectId(sport);
+
                 Match.native(function (err, collection) {
                     if (err)
                         return nearCb({ error: err });
@@ -288,7 +291,7 @@ module.exports = {
                         },
                         {
                             $match: {
-                                $and: [{ 'sport': sport }]
+                                $or: [{ 'sport': sport }, { 'subsportid': sport }]
                             }
                         },
                         {
@@ -305,6 +308,22 @@ module.exports = {
                                 localField: "scid",
                                 foreignField: "_id",
                                 as: "sportcenterdetail"
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "sport",
+                                localField: "sport",
+                                foreignField: "_id",
+                                as: "sportdetail"
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "subsport",
+                                localField: "subsportid",
+                                foreignField: "_id",
+                                as: "subsportdetail"
                             }
                         },
                         {
@@ -325,7 +344,9 @@ module.exports = {
                                     profilethumbimage: 1,
                                     sports: 1,
                                 },
-                                sportcenterdetail: 1
+                                sportcenterdetail: 1,
+                                sportdetail: 1,
+                                subsportdetail: 1
                             }
                         }
 
@@ -333,7 +354,15 @@ module.exports = {
                         if (err)
                             return nearCb({ error: err });
 
-                        sendResult = result
+                        result.forEach(function (index) {
+                            index['matchplayercount'] = 0;
+                            matchId.push(index._id);
+                        });
+                        
+                        matchId = _.uniq(matchId, false);
+                        matchId = matchId.map(function (obj) { return ObjectId(obj) });
+                        sendResult = result;
+
                         nearCb();
                     });
                 });
@@ -378,6 +407,22 @@ module.exports = {
                             }
                         },
                         {
+                            $lookup: {
+                                from: "sport",
+                                localField: "sport",
+                                foreignField: "_id",
+                                as: "sportdetail"
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "subsport",
+                                localField: "subsportid",
+                                foreignField: "_id",
+                                as: "subsportdetail"
+                            }
+                        },
+                        {
                             $project: {
                                 fieldid: 1,
                                 benchplayers: 1,
@@ -395,16 +440,63 @@ module.exports = {
                                     profilethumbimage: 1,
                                     sports: 1,
                                 },
-                                sportcenterdetail: 1
+                                sportcenterdetail: 1,
+                                sportdetail: 1,
+                                subsportdetail: 1
                             }
                         }
                     ], function (err, result) {
                         if (err)
                             return nearByCb({ error: err });
 
+                        result.forEach(function (index) {
+                            index['matchplayercount'] = 0;
+                            matchId.push(index._id);
+                        });
+                        
+                        matchId = _.uniq(matchId, false);
+                        matchId = matchId.map(function (obj) { return ObjectId(obj) });
                         sendResult = result
+                        
                         nearByCb();
                     });
+                });
+            },
+            function (countCb) {
+                Team.native(function (err, collection) {
+                    collection.aggregate([
+                        {
+                            $match: {
+                                matchid: { $in: matchId }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: {
+                                    matchid: "$matchid"
+                                },
+                                count: {
+                                    $sum: 1
+                                }
+                            }
+                        }
+                    ],
+                        function (err, result) {
+                            if (err)
+                                return res.serverError(err);
+
+                            result.forEach(function (index) {
+                                var rid = index['_id']['matchid'];
+                                sendResult.forEach(function (matchData) {
+                                    var matchid = matchData._id
+
+                                    if (rid + "" == matchid + "") {
+                                        matchData.matchplayercount = index['count'];
+                                    }
+                                });
+                            });
+                            countCb();
+                        });
                 });
             }
         ], function (err, finalResult) {
@@ -470,6 +562,22 @@ module.exports = {
                             }
                         },
                         {
+                            $lookup: {
+                                from: "subsport",
+                                localField: "matchdetail.subsportid",
+                                foreignField: "_id",
+                                as: "matchdetail.subsport",
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "sport",
+                                localField: "matchdetail.sport",
+                                foreignField: "_id",
+                                as: "matchdetail.sportdetail",
+                            }
+                        },
+                        {
                             $group: {
                                 _id: "$_id",
                                 teamid: { $first: "$teamid" },
@@ -494,6 +602,7 @@ module.exports = {
                         if (err)
                             return res.serverError(err);
 
+                            
                         result.forEach(function (index) {
                             index['matchplayercount'] = 0;
                             matchId.push(index.matchdetail[0]._id);
@@ -533,7 +642,7 @@ module.exports = {
                                 var rid = index['_id']['matchid'];
                                 resultData.forEach(function (invite) {
                                     var matchid = invite.matchid
-                                    
+
                                     if (rid + "" == matchid + "") {
                                         invite.matchplayercount = index['count'];
                                     }
@@ -569,29 +678,29 @@ module.exports = {
                 res.badRequest({ error: errmsg.join(", ") });
                 return;
             }
-            if(!result){
-                return res.badRequest({error:"Somthing went wrong.Please try again"});
+            if (!result) {
+                return res.badRequest({ error: "Somthing went wrong.Please try again" });
             }
-            res.send({message:"You are join the match"});
+            res.send({ message: "You are join the match" });
 
         });
     },
 
     LeaveMatch: function (req, res) {
-        var userid =req.param("userid");
-        var matchid=req.param("matchid");
+        var userid = req.param("userid");
+        var matchid = req.param("matchid");
 
-        Team.destroy({$and:[{userid:userid},{matchid:matchid}]}).exec(function (err, result) {
+        Team.destroy({ $and: [{ userid: userid }, { matchid: matchid }] }).exec(function (err, result) {
             if (err) {
                 res.serverError(err);
                 return;
             }
-            
-            if(!result){
-                return res.badRequest({error:"Somthing went wrong.Please try again"});
+
+            if (!result) {
+                return res.badRequest({ error: "Somthing went wrong.Please try again" });
             }
 
-            res.send({message:"You are leave the match"});
+            res.send({ message: "You are leave the match" });
 
         });
     }

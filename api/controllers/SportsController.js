@@ -1,30 +1,30 @@
 var jsonfile = require('jsonfile');
 var sportfile = sails.config.paths.sportFile;
 var sportPlayerFile = sails.config.paths.sportPlayerFile;
-
+var ObjectId = require('mongodb').ObjectID;
 
 module.exports = {
 
-    getSport: function (req, res) {
-        jsonfile.readFile(sportfile, function (err, result) {
-            res.send({ data: result });
-        });
+    // getSport: function (req, res) {
+    //     jsonfile.readFile(sportfile, function (err, result) {
+    //         res.send({ data: result });
+    //     });
 
-    },
+    // },
 
-    getSportByKey: function (req, res) {
-        var key = req.param("key");
+    // getSportByKey: function (req, res) {
+    //     var key = req.param("key");
 
-        jsonfile.readFile(sportfile, function (err, result) {
+    //     jsonfile.readFile(sportfile, function (err, result) {
 
-            result.forEach(function (index) {
-                if (index.sportkey == key)
-                    result = index;
-            });
+    //         result.forEach(function (index) {
+    //             if (index.sportkey == key)
+    //                 result = index;
+    //         });
 
-            res.send({ data: result });
-        });
-    },
+    //         res.send({ data: result });
+    //     });
+    // },
 
     getSportPlayer: function (req, res) {
         jsonfile.readFile(sportPlayerFile, function (err, result) {
@@ -45,6 +45,161 @@ module.exports = {
 
             res.send({ data: result });
         });
+    },
+
+    CreateSport: function (req, res) {
+        var reqData = eval(req.body);
+
+        Sport.create(reqData).exec(function (err, result) {
+            if (err) {
+                var errmsg = [];
+                if (err.Errors) {
+                    var arrErrors = err.Errors;
+                    for (var k in arrErrors) {
+                        if (arrErrors.hasOwnProperty(k)) {
+                            errmsg.push(arrErrors[k][0].message);
+                        }
+                    }
+                }
+                usersCb({ error: errmsg.join(", ") });
+                return;
+            }
+
+            res.send({ message: "Sport create successfully" });
+        })
+    },
+    CreateSubsport: function (req, res) {
+        var reqData = eval(req.body);
+
+        Subsport.create(reqData).exec(function (err, result) {
+            if (err) {
+                var errmsg = [];
+                if (err.Errors) {
+                    var arrErrors = err.Errors;
+                    for (var k in arrErrors) {
+                        if (arrErrors.hasOwnProperty(k)) {
+                            errmsg.push(arrErrors[k][0].message);
+                        }
+                    }
+                }
+                usersCb({ error: errmsg.join(", ") });
+                return;
+            }
+
+            res.send({ message: "Subsport create successfully" });
+        })
+    },
+
+    getSport: function (req, res) {
+
+        Sport.find({}).exec(function (err, result) {
+            if (err)
+                return res.serverError(err);
+
+            if (result.length == 0)
+                return res.badRequest({ error: "Sport not found" });
+
+            res.send({ data: result });
+        })
+    },
+    getSubsport: function (req, res) {
+
+        Subsport.find({}).populate('sportid').exec(function (err, result) {
+            if (err)
+                return res.serverError(err);
+
+            if (result.length == 0)
+                return res.badRequest({ error: "Sport not found" });
+
+            res.send({ data: result });
+        })
+    },
+
+    getSportByKey: function (req, res) {
+        var sportId = req.param("sportid");
+        var sportidObj={};
+        if (!sportId)
+            return res.badRequest({ error: "Sport id required" });
+
+         if(sportId!="all")
+         {
+             sportidObj={ sportid: sportId };
+         }   
+        Subsport.find(sportidObj).exec(function (err, result) {
+            if (err)
+                return res.serverError(err);
+
+            if (result.length == 0)
+                return res.badRequest({ error: "Subsport not found" });
+
+            res.send({ data: result });
+        })
+    },
+
+    SubsportList: function (req, res) {
+        var reqData = eval(req.body);
+        var subsportId = reqData.sportid;
+        var sportArr = [];
+        subsportId = subsportId.split(",");
+        subsportId = subsportId.map(function (obj) { return ObjectId(obj) });
+
+        Subsport.native(function (err, collection) {
+            if (err)
+                return nearCb({ error: err });
+
+            collection.aggregate([
+                {
+                    $match: {
+                        _id: { $in: subsportId }
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "sport",
+                        localField: "sportid",
+                        foreignField: "_id",
+                        as: "sportdetail",
+                    }
+                },
+                {
+                    $group:
+                    {
+                        _id: {
+                            id: "$sportdetail._id",
+                            title: "$sportdetail.title",
+                            imageurl: "$sportdetail.imageurl"
+                        },
+                        subsport: {
+                            $push: {
+                                id: "$_id",
+                                title: "$title",
+                                value: "$value"
+                            }
+                        }
+                    }
+                }
+            ], function (err, result) {
+                if (err)
+                    return res.serverError(err);
+
+                if (result.length == 0) {
+                    res.badRequest({ error: "Sportlist not found" });
+                }
+
+                result.forEach(function (index) {
+                    var sport = {
+                        id: index._id["id"][0],
+                        title: index._id["title"][0],
+                        imageurl: index._id["imageurl"][0],
+                        subsport: index.subsport
+                    }
+                    sportArr.push(sport);
+                });
+
+                res.send({ data: sportArr });
+            });
+        });
+
     }
 
 

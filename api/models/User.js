@@ -122,13 +122,13 @@ module.exports = {
 		 */
 
 		validatePassword: function(candidatePassword, cb) {
-			console.log("candidatePassword",candidatePassword);
-			console.log("encandidatePassword",this.encryptedpassword);
+			//console.log("candidatePassword",candidatePassword);
+			//console.log("encandidatePassword",this.encryptedpassword);
 
 			bcrypt.compare(candidatePassword, this.encryptedpassword, function(err, valid) {
 				if (err) return cb(err);
 
-				console.log("valid",valid);
+			//	console.log("valid",valid);
 				cb(null, valid);
 			});
 		},
@@ -295,7 +295,7 @@ module.exports = {
 	beforeUpdate: [
 		// Encrypt user's password, if changed
 		function(values, cb) {
-			console.log("upfate password",values);
+			//console.log("upfate password",values);
 
 			if (!values.encryptedpassword) {
 			//	console.log("not update password",values);
@@ -317,7 +317,7 @@ module.exports = {
 		bcrypt.hash(values.encryptedpassword, 10, function(err, encryptedpassword) {
 			if (err) return cb(err);
 
-			console.log("values",encryptedpassword);
+			//console.log("values",encryptedpassword);
 			values.encryptedpassword = encryptedpassword;
 			cb();
 		});
