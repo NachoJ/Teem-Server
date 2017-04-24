@@ -2,15 +2,14 @@ module.exports = {
 
     CreateSportcenter: function (req, res) {
         var reqData = eval(req.body);
-        var dataObj;
+        var dataObj, sportcenterObj;
 
         if (!reqData.name || !reqData.address || !reqData.phone || !reqData.description)
             return res.badRequest({ error: "name or address or phone or description is reqired" });
 
-        async.series([function (sportCb) {
-            Sportcenter
-                .create(reqData)
-                .exec(function (err, sportData) {
+        async.series([
+            function (sportCb) {
+                Sportcenter.create(reqData).exec(function (err, sportData) {
                     if (err) {
                         var errmsg = [];
                         if (err.Errors) {
@@ -26,16 +25,30 @@ module.exports = {
                         });
                         return;
                     }
-                    if (sportData) {
-                        dataObj = { data:{
-                            message: "Sportcenter create successfully",
-                            data:sportData
-                        }
-                        }
-                        sportCb();
-                    }
+                    sportcenterObj = sportData;
+                    sportCb();
                 });
-        }
+            },
+            function (userCb) {
+                User.findOneById(reqData.userid).exec(function (err, userResult) {
+                        if(err)
+                            return res.serverError(err);
+
+                    if (userResult) {
+                        Jobs.create('sendSportcenterDetail', { sportcenter: sportcenterObj,user:userResult })
+                            .save(function (err, data, msg, token) { });
+                        
+                        dataObj = {
+                            data: {
+                                message: "Sportcenter create successfully",
+                                data: sportcenterObj
+                            }
+                        }
+                        userCb();
+                    }
+                    
+                });
+            }
         ], function (err, finalResult) {
             if (err)
                 res.badRequest(err);
@@ -46,8 +59,10 @@ module.exports = {
     },
 
     ListSportcenter: function (req, res) {
+        var userid = req.param("userid");
+
         Sportcenter
-            .find()
+            .find({ userid: userid })
             .exec(function (err, sportData) {
                 if (sportData.length > 0) {
                     res.send({ data: sportData })
@@ -123,32 +138,32 @@ module.exports = {
                         sportUpdate();
                     });
             },
-            function(matchfindCb){
-                Match.find({ scid: scData[0].id }).exec(function(err,matchResult){
-                        if (err) { 
+            function (matchfindCb) {
+                Match.find({ scid: scData[0].id }).exec(function (err, matchResult) {
+                    if (err) {
                         return res.serverError(err);
                     }
-                    findmatch=matchResult;
+                    findmatch = matchResult;
                     matchfindCb();
                 });
             },
             function (matchCb) {
-               // console.log("scData.id",scData[0].id);
-               if(findmatch.length==0){
-                   //console.log("match");
-                   matchCb();
-                   return;
-               }
+                // console.log("scData.id",scData[0].id);
+                if (findmatch.length == 0) {
+                    //console.log("match");
+                    matchCb();
+                    return;
+                }
                 var matchData = {
                     coordinates: [parseFloat(scData[0].long), parseFloat(scData[0].lat)]
                 };
 
                 Match.update({ scid: scData[0].id }, matchData).exec(function afterwards(err, matchData) {
-                    if (err) { 
+                    if (err) {
                         return res.serverError(err);
                     }
                     if (!matchData.length) {
-                       return  matchCb({ error: "Match record not found in our database" });
+                        return matchCb({ error: "Match record not found in our database" });
                     }
                     matchCb();
 

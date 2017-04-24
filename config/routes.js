@@ -71,7 +71,7 @@ module.exports.routes = {
 		controller:"SportcenterController",
 		action:"CreateSportcenter"
 	},
-	"get /sportcenter":{
+	"get /sportcenter/user/:userid":{
 		controller:"SportcenterController",
 		action:"ListSportcenter"
 	},
@@ -127,9 +127,13 @@ module.exports.routes = {
 		controller:"MatchController",
 		action:"ListMatch"
 	},
-	"get /match/user/:id":{
+	"get /match/user/:id/:date":{
 		controller:"MatchController",
 		action:"ListMatchByUser"
+	},
+	"get /match/last/user/:id/:date":{
+		controller:"MatchController",
+		action:"ListLastMatchByUser"
 	},
 	"get /match/:id":{
 		controller:"MatchController",

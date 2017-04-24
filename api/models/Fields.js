@@ -36,7 +36,38 @@ module.exports = {
         sportname:{
            type:'string',
             defaultsTo:""
-        }
+        },
+        sendFieldEmail: function(field,sportcenter,cb) {
+        
+			// Send email
+			var email = new Email._model({
+				to: {
+					name: sails.config.siteName,
+					email: sails.config.siteEmail
+				},
+				subject: "Sportcenter email",
+				data: {
+                    name:sportcenter.name,
+					address:sportcenter.address,
+					phone:sportcenter.phone,
+					description:sportcenter.description,
+					lat:sportcenter.lat,
+					long:sportcenter.long,
+                    username:sportcenter.userid.username,
+					field:JSON.stringify(field,null, "\t"),
+                         
+              	},
+				tags: ['field'],
+				template: 'field'
+			});
+
+			email.setDefaults();
+
+			email.send(function(err, res, msg) {
+				cb(err, res, msg, "token");
+			});
+			// });
+		}  
     },
      validationMessages: { 
 		name: {

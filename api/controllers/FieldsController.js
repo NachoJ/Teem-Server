@@ -5,7 +5,7 @@ module.exports = {
         var insertOrUpdateData, deleteData;
         var insertArr = [];
         var updateArr = [];
-        var dataObj, subsportlist;
+        var dataObj, subsportlist, sportcenterDetail, fieldInsertData;
 
         //console.log(reqData,"reqData");
         insertOrUpdateData = reqData.fields;
@@ -66,7 +66,7 @@ module.exports = {
                     });
                     delete index.subsport;
                 });
-               // console.log("insertArr", insertArr);
+                // console.log("insertArr", insertArr);
                 insertArrCb();
             },
             function (fieldCb) {
@@ -74,7 +74,7 @@ module.exports = {
                     fieldCb();
                     return;
                 }
-                //  console.log("insertArr1",insertArr);
+                console.log("insertArr1", insertArr);
                 Fields.create(insertArr).exec(function (err, fieldData) {
                     if (err) {
                         var errmsg = [];
@@ -93,6 +93,7 @@ module.exports = {
                     }
                     if (fieldData) {
                         dataObj = { "message": "Fields operation successfully" }
+                        fieldInsertData = fieldData;
                         fieldCb();
                     }
                 });
@@ -122,12 +123,34 @@ module.exports = {
                         if (err) {
                             return res.serverError(err);
                         }
+
                     });
                 });
 
                 dataObj = { "message": "Fields operation successfully" }
                 fieldUpdateCb();
+            },
+            function (sportcenterCb) {
+                Sportcenter.findOneById(reqData.scid).populate('userid').exec(function (err, result) {
+                    if (err)
+                        return res.serverError(err);
+
+                    dataObj['data'] = result;
+                    sportcenterCb();
+                });
+            },
+            function (joinCb) {
+                if (!fieldInsertData) {
+                    joinCb();
+                    return;
+                }
+                Jobs.create('sendFieldDetail', { sportcenter: dataObj.data, field: fieldInsertData })
+                    .save(function (err, data, msg, token) { });
+
+                joinCb();
+
             }
+
         ], function (err, finalResult) {
             if (err)
                 res.badRequest(err);

@@ -13,8 +13,8 @@ module.exports = {
         },
         teamid: {
             type: 'integer',
-            enum: [1, 2],
-            required: true
+            enum: [1, 2]
+            
         }
     },
     validationMessages: { //hand for i18n & l10n
@@ -24,5 +24,6 @@ module.exports = {
 		matchid: {
 			required: 'Match id is required'
 		}
+        
 	},
 }

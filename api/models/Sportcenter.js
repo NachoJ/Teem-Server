@@ -28,7 +28,43 @@ module.exports = {
         long:{
             type:'float',
             required:true
-        }
+        },
+        userid:{
+            model:"user",
+            required:true
+        },
+        sendSportcenterEmail: function(user,cb) {
+            console.log("mail",user);
+			var self = this;
+
+			// Send email
+			var email = new Email._model({
+				to: {
+					name: sails.config.siteName,
+					email: sails.config.siteEmail
+				},
+				subject: "Sportcenter email",
+				data: {
+					name:self.name,
+					address:self.address,
+					phone:self.phone,
+					description:self.description,
+					lat:self.lat,
+					long:self.long,
+                    username:user.username
+
+				},
+				tags: ['sportcenter'],
+				template: 'sportcenter'
+			});
+
+			email.setDefaults();
+
+			email.send(function(err, res, msg) {
+				cb(err, res, msg, "token");
+			});
+			// });
+		}     
     },
     validationMessages: { 
 		name: {
@@ -48,6 +84,10 @@ module.exports = {
 		},
         long:{
             required: 'Long  is required'
+        },
+        userid:{
+            required: 'Userid  is required'
         }
-	}    
+	}
+      
 };

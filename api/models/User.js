@@ -49,8 +49,8 @@ module.exports = {
 		},
 		fbid: {
 			type: 'string',
-			unique: true,
-			defaultsTo:""
+			unique: true
+			
 		},
 		encryptedpassword: {
 			type: 'string',

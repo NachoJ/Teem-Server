@@ -6,7 +6,7 @@ module.exports = {
         var reqData = eval(req.body);
         var dataObj;
         var sportDetail, fieldDetail;
-      
+
         async.series([
             function (scCb) {
                 Sportcenter.findOneById(reqData.scid).exec(function (err, scData) {
@@ -343,6 +343,7 @@ module.exports = {
                                     profileimage: 1,
                                     profilethumbimage: 1,
                                     sports: 1,
+                                    city:1
                                 },
                                 sportcenterdetail: 1,
                                 sportdetail: 1,
@@ -358,7 +359,7 @@ module.exports = {
                             index['matchplayercount'] = 0;
                             matchId.push(index._id);
                         });
-                        
+
                         matchId = _.uniq(matchId, false);
                         matchId = matchId.map(function (obj) { return ObjectId(obj) });
                         sendResult = result;
@@ -439,6 +440,7 @@ module.exports = {
                                     profileimage: 1,
                                     profilethumbimage: 1,
                                     sports: 1,
+                                    city:1
                                 },
                                 sportcenterdetail: 1,
                                 sportdetail: 1,
@@ -453,11 +455,11 @@ module.exports = {
                             index['matchplayercount'] = 0;
                             matchId.push(index._id);
                         });
-                        
+
                         matchId = _.uniq(matchId, false);
                         matchId = matchId.map(function (obj) { return ObjectId(obj) });
                         sendResult = result
-                        
+
                         nearByCb();
                     });
                 });
@@ -509,6 +511,8 @@ module.exports = {
 
     ListMatchByUser: function (req, res) {
         var id = req.param("id");
+        var userdate=req.param("date");
+       
         id = new ObjectId(id);
         var matchId = [];
         var resultData;
@@ -519,16 +523,17 @@ module.exports = {
                         return nearByCb({ error: err });
 
                     collection.aggregate([
-                        {
-                            $match: {
-                                $and: [{ 'userid': id }]
-                            }
-                        }, {
+                         {
                             $lookup: {
                                 from: "match",
                                 localField: "matchid",
                                 foreignField: "_id",
                                 as: "matchdetail"
+                            }
+                        },
+                        {
+                            $match: {
+                                $and: [{ 'userid': id },{'matchdetail.matchtime': {$gte: new Date(userdate)}}]
                             }
                         },
                         {
@@ -602,7 +607,7 @@ module.exports = {
                         if (err)
                             return res.serverError(err);
 
-                            
+
                         result.forEach(function (index) {
                             index['matchplayercount'] = 0;
                             matchId.push(index.matchdetail[0]._id);
@@ -662,28 +667,74 @@ module.exports = {
     },
     JoinMatch: function (req, res) {
         var reqData = eval(req.body);
+        console.log("reqData",reqData);
+        
+        var isteamid = false;
+        var teamResult;
+        async.series([
 
-        Team.create(reqData).exec(function (err, result) {
-            if (err) {
-                console.log("err", err);
-                var errmsg = [];
-                if (err.Errors) {
-                    var arrErrors = err.Errors;
-                    for (var k in arrErrors) {
-                        if (arrErrors.hasOwnProperty(k)) {
-                            errmsg.push(arrErrors[k][0].message);
-                        }
+            function (teamfindCb) {
+                Team.findOne({ $and: [{ matchid: reqData.matchid }, { userid: reqData.userid }] }).exec(function (err, result) {
+                    if (err)
+                        return res.serverError(err);
+
+                    if (typeof result != "undefined") {
+                        if (result.teamid == reqData.teamid) 
+                                isteamid = true;
                     }
+                    teamResult = result;
+                    console.log("teamResult",teamResult);
+                    teamfindCb();
+                });
+            },
+            function (deleteteamCb) {
+                if (isteamid == true || typeof teamResult == "undefined") {
+                    deleteteamCb();
+                    return;
                 }
-                res.badRequest({ error: errmsg.join(", ") });
-                return;
-            }
-            if (!result) {
-                return res.badRequest({ error: "Somthing went wrong.Please try again" });
-            }
-            res.send({ message: "You are join the match" });
+                 console.log("delete",teamResult);
+                Team.destroy({id:teamResult.id}).exec(function(err,result){
+                        if(err)
+                            return res.serverError(err);
 
+                      deleteteamCb();
+                });
+            },
+            function (teamCb) {
+                if(isteamid == true){
+                    teamCb();
+                    return;
+                }
+                console.log("create",teamResult);
+                Team.create(reqData).exec(function (err, result) {
+                    if (err) {
+                        console.log("err", err);
+                        var errmsg = [];
+                        if (err.Errors) {
+                            var arrErrors = err.Errors;
+                            for (var k in arrErrors) {
+                                if (arrErrors.hasOwnProperty(k)) {
+                                    errmsg.push(arrErrors[k][0].message);
+                                }
+                            }
+                        }
+                        teamCb({ error: errmsg.join(", ") });
+                        return;
+                    }
+                    if (!result) {
+                        return teamCb({ error: "Somthing went wrong.Please try again" });
+                    }
+                   
+                    teamCb();
+                });
+            }
+        ],function(err,finalResult){
+            if(err)
+                res.badRequest(err);
+            else 
+            res.send({ message: "You are join the match" });
         });
+
     },
 
     LeaveMatch: function (req, res) {
@@ -703,6 +754,162 @@ module.exports = {
             res.send({ message: "You are leave the match" });
 
         });
+    },
+    ListLastMatchByUser: function (req, res) {
+        var id = req.param("id");
+        var userdate=req.param("date");
+       
+        id = new ObjectId(id);
+        var matchId = [];
+        var resultData;
+        async.series([
+            function (teamCb) {
+                Team.native(function (err, collection) {
+                    if (err)
+                        return nearByCb({ error: err });
+
+                    collection.aggregate([
+                         {
+                            $lookup: {
+                                from: "match",
+                                localField: "matchid",
+                                foreignField: "_id",
+                                as: "matchdetail"
+                            }
+                        },
+                        {
+                            $match: {
+                                $and: [{ 'userid': id },{'matchdetail.matchtime': {$lt: new Date(userdate)}}]
+                            }
+                        },
+                        {
+                            $unwind: {
+                                path: "$matchdetail",
+                                preserveNullAndEmptyArrays: true
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "user",
+                                localField: "userid",
+                                foreignField: "_id",
+                                as: "userdetail",
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "sportcenter",
+                                localField: "matchdetail.scid",
+                                foreignField: "_id",
+                                as: "matchdetail.sportcenterdetail",
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "user",
+                                localField: "matchdetail.userid",
+                                foreignField: "_id",
+                                as: "matchdetail.userdetail",
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "subsport",
+                                localField: "matchdetail.subsportid",
+                                foreignField: "_id",
+                                as: "matchdetail.subsport",
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "sport",
+                                localField: "matchdetail.sport",
+                                foreignField: "_id",
+                                as: "matchdetail.sportdetail",
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: "$_id",
+                                teamid: { $first: "$teamid" },
+                                matchid: { $first: "$matchid" },
+                                userdetail: { $first: "$userdetail" },
+                                matchdetail: { $push: "$matchdetail" }
+                            }
+                        },
+
+                        {
+                            $project: {
+                                _id: 1,
+                                matchid: 1,
+                                teamid: 1,
+                                userdetail: 1,
+                                matchdetail: {
+                                    $filter: { input: "$matchdetail", as: "matchdetail", cond: { $ifNull: ["$$matchdetail._id", false] } }
+                                }
+                            }
+                        }
+                    ], function (err, result) {
+                        if (err)
+                            return res.serverError(err);
+
+
+                        result.forEach(function (index) {
+                            index['matchplayercount'] = 0;
+                            matchId.push(index.matchdetail[0]._id);
+                        });
+                        matchId = _.uniq(matchId, false);
+                        matchId = matchId.map(function (obj) { return ObjectId(obj) });
+
+                        resultData = result;
+                        teamCb();
+                    });
+                });
+            },
+            function (countCb) {
+                Team.native(function (err, collection) {
+                    collection.aggregate([
+                        {
+                            $match: {
+                                matchid: { $in: matchId }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: {
+                                    matchid: "$matchid"
+                                },
+                                count: {
+                                    $sum: 1
+                                }
+                            }
+                        }
+                    ],
+                        function (err, result) {
+                            if (err)
+                                return res.serverError(err);
+
+                            result.forEach(function (index) {
+                                var rid = index['_id']['matchid'];
+                                resultData.forEach(function (invite) {
+                                    var matchid = invite.matchid
+
+                                    if (rid + "" == matchid + "") {
+                                        invite.matchplayercount = index['count'];
+                                    }
+                                });
+                            });
+                            countCb();
+                        });
+                });
+            }
+        ],
+            function (err, finalResult) {
+                if (err)
+                    res.badRequest(err);
+                else
+                    res.send({ data: resultData });
+            });
     }
 
 };
