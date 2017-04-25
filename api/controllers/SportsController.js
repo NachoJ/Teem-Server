@@ -48,9 +48,25 @@ module.exports = {
     },
 
     CreateSport: function (req, res) {
-        var reqData = eval(req.body);
-
-        Sport.create(reqData).exec(function (err, result) {
+        //var reqData = eval(req.body);
+        var jsonObj = [
+            {
+                "id": "58fdf7206cbea6e77720f641",
+                "title": "Basketball",
+                "imageurl": "/assets/img/b02.png"
+            },
+            {
+                "id": "58fdf72b6cbea6e77720f642",
+                "title": "Soccer",
+                "imageurl": "/assets/img/b01.png"
+            },
+            {
+                "id": "58fdf7316cbea6e77720f643",
+                "title": "Padel",
+                "imageurl": "/assets/img/b03.png"
+            }
+        ];
+        Sport.create(jsonObj).exec(function (err, result) {
             if (err) {
                 var errmsg = [];
                 if (err.Errors) {
@@ -71,7 +87,46 @@ module.exports = {
     CreateSubsport: function (req, res) {
         var reqData = eval(req.body);
 
-        Subsport.create(reqData).exec(function (err, result) {
+        var jsonObj = [
+            {
+                "id": "58fdf795388094d452525185",
+                "sportid": "58fdf7206cbea6e77720f641",
+                "title": "3 VS 3",
+                "value": 3
+            },
+            {
+                "id": "58fdf79d388094d452525186",
+                "sportid": "58fdf7206cbea6e77720f641",
+                "title": "5 VS 5",
+                "value": 5
+            },
+            {
+                "id": "58fdf7ba388094d452525187",
+                "sportid": "58fdf72b6cbea6e77720f642",
+                "title": "5 VS 5",
+                "value": 5
+            },
+            {
+                "id": "58fdf7c1388094d452525188",
+                "sportid": "58fdf72b6cbea6e77720f642",
+                "title": "7 VS 7",
+                "value": 7
+            },
+            {
+                "id": "58fdf7cb388094d452525189",
+                "sportid": "58fdf72b6cbea6e77720f642",
+                "title": "11 VS 11",
+                "value": 11
+            },
+            {
+                "id": "58fdf7e2388094d45252518a",
+                "sportid": "58fdf7316cbea6e77720f643",
+                "title": "2 VS 2",
+                "value": 2
+            }
+
+        ];
+        Subsport.create(jsonObj).exec(function (err, result) {
             if (err) {
                 var errmsg = [];
                 if (err.Errors) {
@@ -117,14 +172,13 @@ module.exports = {
 
     getSportByKey: function (req, res) {
         var sportId = req.param("sportid");
-        var sportidObj={};
+        var sportidObj = {};
         if (!sportId)
             return res.badRequest({ error: "Sport id required" });
 
-         if(sportId!="all")
-         {
-             sportidObj={ sportid: sportId };
-         }   
+        if (sportId != "all") {
+            sportidObj = { sportid: sportId };
+        }
         Subsport.find(sportidObj).exec(function (err, result) {
             if (err)
                 return res.serverError(err);

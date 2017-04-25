@@ -50,11 +50,11 @@ module.exports = {
 		fbid: {
 			type: 'string',
 			unique: true
-			
+
 		},
 		encryptedpassword: {
 			type: 'string',
-			defaultsTo:""
+			defaultsTo: ""
 		},
 
 		isactive: {
@@ -80,26 +80,26 @@ module.exports = {
 		activateddate: {
 			type: 'datetime',
 		},
-		dob:{
-			type:'datetime',
-			defaultsTo:""
+		dob: {
+			type: 'datetime',
+			defaultsTo: ""
 		},
-		city:{
-			type:'string',
-			defaultsTo:""
+		city: {
+			type: 'string',
+			defaultsTo: ""
 		},
-		description:{
-			type:'string',
-			defaultsTo:""
+		description: {
+			type: 'string',
+			defaultsTo: ""
 		},
-		sports:{
-			type:'string',
-			defaultsTo:""
+		sports: {
+			type: 'string',
+			defaultsTo: ""
 		},
 		/**
 		 * Get user's full name
 		 */
-		fullName: function() {
+		fullName: function () {
 			// return _.compact([this.firstname, this.lastname]).join(' ');
 			return _.compact([this.username]).join(' ');
 		},
@@ -108,7 +108,7 @@ module.exports = {
 		 * Custom toJSON() implementation. Removes unwanted attributes.
 		 */
 
-		toJSON: function() {
+		toJSON: function () {
 			var user = this.toObject();
 			delete user.encryptedpassword;
 			delete user.password;
@@ -121,14 +121,14 @@ module.exports = {
 		 * Check if the supplied password matches the stored password.
 		 */
 
-		validatePassword: function(candidatePassword, cb) {
+		validatePassword: function (candidatePassword, cb) {
 			//console.log("candidatePassword",candidatePassword);
 			//console.log("encandidatePassword",this.encryptedpassword);
 
-			bcrypt.compare(candidatePassword, this.encryptedpassword, function(err, valid) {
+			bcrypt.compare(candidatePassword, this.encryptedpassword, function (err, valid) {
 				if (err) return cb(err);
 
-			//	console.log("valid",valid);
+				//	console.log("valid",valid);
 				cb(null, valid);
 			});
 		},
@@ -137,26 +137,26 @@ module.exports = {
 		 * Generate password reset token
 		 */
 
-		generatePasswordResetToken: function(cb) {
-			this.passwordresettoken = randomstring.generate(25);
-			this.save(function(err) {
-				if (err) return cb(err);
-				cb();
-			});
-		},
+		// generatePasswordResetToken: function (cb) {
+		// 	this.passwordresettoken = randomstring.generate(25);
+		// 	this.save(function (err) {
+		// 		if (err) return cb(err);
+		// 		cb();
+		// 	});
+		// },
 
-		activateAccount: function(cb) {
+		activateAccount: function (cb) {
 			this.isactive = true;
 			this.activationlink = "";
 			this.activateddate = moment().toISOString();
-			this.save(function(err) {
+			this.save(function (err) {
 				if (err)
 					return cb(err);
 				cb();
 			});
 		},
 
-		sendActivationEmail: function(cb) {
+		sendActivationEmail: function (cb) {
 			var self = this;
 
 			// this.generatePasswordResetToken(function (err) {
@@ -179,7 +179,7 @@ module.exports = {
 
 			email.setDefaults();
 
-			email.send(function(err, res, msg) {
+			email.send(function (err, res, msg) {
 				cb(err, res, msg, "token");
 			});
 			// });
@@ -191,34 +191,29 @@ module.exports = {
 		 * instructions to reset their password
 		 */
 
-		sendPasswordResetEmail: function(cb) {
+		sendPasswordResetEmail: function (cb) {
 			var self = this;
+			// Send email
+			var email = new Email._model({
+				to: {
+					name: self.fullName(),
+					email: self.email
+				},
+				subject: "Reset your Teem password",
+				data: {
+					resetURL: sails.config.siteUrl + '/auth/resetpassword/' + self.passwordresettoken
+				},
+				tags: ['password-reset', 'transactional'],
+				template: 'password-reset'
+			});
 
-			this.generatePasswordResetToken(function(err) {
-				if (err) return cb(err);
+			email.setDefaults();
 
-				// Send email
-				var email = new Email._model({
-					to: {
-						name: self.fullName(),
-						email: self.email
-					},
-					subject: "Reset your Teem password",
-					data: {
-						resetURL: sails.config.siteUrl + '/auth/resetpassword/' + self.passwordresettoken
-					},
-					tags: ['password-reset', 'transactional'],
-					template: 'password-reset'
-				});
-
-				email.setDefaults();
-
-				email.send(function(err, res, msg) {
-					cb(err, res, msg, "token");
-				});
+			email.send(function (err, res, msg) {
+				cb(err, res, msg, "token");
 			});
 		},
-		sendInvitationEmail: function(user,inviteruser,cb) {
+		sendInvitationEmail: function (user, inviteruser, cb) {
 			var self = this;
 
 			// Send email
@@ -230,7 +225,7 @@ module.exports = {
 				subject: "Teem web Invitation email",
 				data: {
 					fullname: user.username,
-					invitationmsg:inviteruser.username+" has invite to join the match"
+					invitationmsg: inviteruser.username + " has invite to join the match"
 				},
 				tags: ['invitation', 'invitational'],
 				template: 'invitation'
@@ -238,11 +233,11 @@ module.exports = {
 
 			email.setDefaults();
 
-			email.send(function(err, res, msg) {
+			email.send(function (err, res, msg) {
 				cb(err, res, msg, "token");
 			});
 			// });
-		}   
+		}
 
 	},
 
@@ -264,25 +259,25 @@ module.exports = {
 
 	beforeCreate: [
 		// Encrypt user's password
-		function(values, cb) {
-			
-			if(!values.fbid){
-				if (!values.encryptedpassword ) {
+		function (values, cb) {
+
+			if (!values.fbid) {
+				if (!values.encryptedpassword) {
 					return cb({
 						err: "Password required!"
 					});
 				}
-				
-				User.encryptPassword(values, function(err) {
+
+				User.encryptPassword(values, function (err) {
 					cb(err);
 				});
-			}else{
+			} else {
 				cb();
 			}
 		},
 
 		// Create an API key
-		function(values, cb) {
+		function (values, cb) {
 			values.apiKey = uuid.v4();
 			cb();
 		}
@@ -294,15 +289,15 @@ module.exports = {
 
 	beforeUpdate: [
 		// Encrypt user's password, if changed
-		function(values, cb) {
-			//console.log("upfate password",values);
+		function (values, cb) {
+			console.log("upfate password",values);
 
 			if (!values.encryptedpassword) {
-			//	console.log("not update password",values);
+				//	console.log("not update password",values);
 				return cb();
 			}
 
-			User.encryptPassword(values, function(err) {
+			User.encryptPassword(values, function (err) {
 				cb(err);
 			});
 		}
@@ -312,12 +307,12 @@ module.exports = {
 	 * User password encryption. Uses bcrypt.
 	 */
 
-	encryptPassword: function(values, cb) {
-			
-		bcrypt.hash(values.encryptedpassword, 10, function(err, encryptedpassword) {
+	encryptPassword: function (values, cb) {
+
+		bcrypt.hash(values.encryptedpassword, 10, function (err, encryptedpassword) {
 			if (err) return cb(err);
 
-			//console.log("values",encryptedpassword);
+			console.log("envalues", encryptedpassword);
 			values.encryptedpassword = encryptedpassword;
 			cb();
 		});

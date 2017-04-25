@@ -1,9 +1,11 @@
 var bcrypt = require('bcrypt');
 var moment = require('moment');
+var randomstring = require("randomstring");
 
 module.exports = {
 	Login: function (req, res) {
 		var loginData = eval(req.body);
+		//console.log("loginData", loginData);
 		//loginData.active="1";
 		User.findOneByEmail(loginData.email).exec(function (err, user) {
 			if (err) {
@@ -30,9 +32,9 @@ module.exports = {
 	},
 
 	RegisterUser: function (req, res) {
-		// console.log(req.body);
+		//console.log(req.body);
 		var registerData = eval(req.body);
-		console.log("registerData", registerData);
+		//console.log("registerData", registerData);
 		if (!registerData.username && !registerData.email && !registerData.encryptpassword)
 			return res.badRequest({ error: "Username, Email, Password is required" });
 
@@ -42,7 +44,7 @@ module.exports = {
 			function (usersCb) {
 				User.create(registerData).exec(function (err, user) {
 					if (err) {
-						console.log("err", err);
+						//	console.log("err", err);
 						var errmsg = [];
 						if (err.Errors) {
 							var arrErrors = err.Errors;
@@ -91,13 +93,25 @@ module.exports = {
 			if (!user)
 				return res.badRequest({ error: "User with thie email address doesn't exist" });
 
-			user.sendPasswordResetEmail(function (err, data, msg, token) {
-				if (err)
-					return res.serverError(err);
-			});
+			var jsonData = {
+				passwordresettoken: randomstring.generate(25)
+			};
 
-			res.send({
-				message: "Password reset instructions sent in email"
+			User.update({ id: user.id }, jsonData).exec(function (err, userupdate) {
+				if (err) {
+					return res.serverError(err);
+				}
+				//console.log("uerupdate",userupdate);
+				if (userupdate) {
+					userupdate[0].sendPasswordResetEmail(function (err, data, msg, token) {
+						if (err)
+							return res.serverError(err);
+					});
+
+					res.send({
+						message: "Password reset instructions sent in email"
+					});
+				}
 			});
 
 		});
@@ -117,52 +131,88 @@ module.exports = {
 				error: "Fb id is required"
 			});
 
-		var userData;
+		var userData, userStore, userUpdateProfile;
+
 		var email = registerData.email;
-		var fbid = registerData.fbid;
-		var username = registerData.username;
+		//var fbid = registerData.fbid;
+		//var username = registerData.username;
 		var profileImage = registerData.profileimage;
-		if(registerData.dob!="")
-			 registerData.dob = moment(new Date(registerData.dob)).toISOString();
+		if (registerData.dob != "")
+			registerData.dob = moment(new Date(registerData.dob)).toISOString();
 
 		async.series([
 			function (usersCb) {
-				User.findOrCreate({ $and: [{ email: email }, { fbid: fbid }] }, registerData).exec(function (err, user) {
+				User.findOneByEmail(email).exec(function (err, user) {
+					if (err)
+						return res.serverError(err);
+
+					userStore = user;
+					console.log("userStore", userStore);
+					usersCb();
+				});
+			},
+			function (createCb) {
+				if (typeof userStore != "undefined") {
+					createCb();
+					return;
+				}
+				User.create(registerData).exec(function (err, result) {
 					if (err) {
 						return res.serverError(err);
 					}
+					userUpdateProfile = result;
+					createCb();
+				});
+			},
+			function (updateCb) {
+				if (typeof userStore == "undefined") {
+					updateCb();
+					return;
+				}
 
-					var imageName = profileImage.split('/').pop().replace(/\#(.*?)$/, '').replace(/\?(.*?)$/, '');
+				User.update({ id: userStore.id }, registerData).exec(function (err, result) {
+					if (err) {
+						return res.serverError(err);
+					}
+					userUpdateProfile = result[0];
+					updateCb();
+				});
+			},
+			function (updateProfileCb) {
+				var imageName = profileImage.split('/').pop().replace(/\#(.*?)$/, '').replace(/\?(.*?)$/, '');
 
 
-					if (typeof user != "undefined" && user.profileimage != imageName) {
+				console.log("userUpdateProfile", userUpdateProfile);
+				if (userUpdateProfile && userUpdateProfile.profileimage != imageName) {
 
-						var oldProfileImage = "";
-						var userProfileImage = user.profileimage;
+					var oldProfileImage = "";
+					var userProfileImage = userUpdateProfile.profileimage;
 
-						if (userProfileImage.indexOf("https://") == -1)
-							oldProfileImage = user.profileimage;
-						else
-							oldProfileImage = "";
+					if (userProfileImage.indexOf("https://") == -1)
+						oldProfileImage = user.profileimage;
+					else
+						oldProfileImage = "";
 
-						uploadService.fbProfileImageService(profileImage, oldProfileImage, function (filename, log) {
-							user.profileimage = filename.image;
-							user.save();
+					uploadService.fbProfileImageService(profileImage, oldProfileImage, function (filename, log) {
+						userUpdateProfile.profileimage = filename.image;
+						userUpdateProfile.isactive = true;
+						userUpdateProfile.activationlink = "";
+
+						var jsonObj = {
+							isactive: true,
+							activationlink: "",
+							profileimage: filename.image
+						};
+
+						User.update({ id: userUpdateProfile.id }, jsonObj).exec(function (err, userresult) {
 							userData = {
 								message: "Facebook login successfully.",
-								data: user
+								data: userresult[0]
 							};
-							usersCb(null, user);
+							updateProfileCb(null, userUpdateProfile);
 						});
-					}
-					else {
-						userData = {
-							message: "Facebook login successfully.",
-							data: user
-						};
-						usersCb(null, user);
-					}
-				});
+					});
+				}
 			}
 		],
 			function (err, finalresult) {
@@ -176,6 +226,7 @@ module.exports = {
 
 	UserActivation: function (req, res, next) {
 		var usData = eval(req.body);
+		//console.log("usData", usData);
 		if (!usData.activationlink)
 			return res.badRequest({ error: "Required activation key" });
 
@@ -195,6 +246,7 @@ module.exports = {
 				if (err) {
 					return res.serverError(err);
 				}
+
 				return res.send({
 					message: "Your account has been activated. Welcome to Teem Players."
 				});
@@ -214,28 +266,34 @@ module.exports = {
 	ResetPassword: function (req, res, next) {
 
 		var resetData = eval(req.body);
-		console.log(resetData);
+		//console.log(resetData);
 		User.findOneByPasswordresettoken(resetData.resetlink, function (err, user) {
 			if (err)
 				return res.serverError(err);
 			if (!user)
 				return res.badRequest({ error: "User with reset link not found" });
 
-			user.encryptpassword = resetData.password;
-			user.passwordresettoken = "";
-			user.save(
-				function (err) {
-					res.send({
-						message: "Reset password success."
-					});
-				});
 
+			//console.log("user", user);
+			var jsonData = {
+				encryptedpassword: resetData.password,
+				passwordresettoken: ""
+			};
+			User.update({ id: user.id }, jsonData).exec(function (err, userupdate) {
+				if (err) {
+					return res.serverError(err);
+				}
+				//console.log("userupdate", userupdate);
+				return res.send({
+					message: "Reset password success."
+				});
+			});
 
 		});
 	},
 	UpdatePassword: function (req, res) {
 		var resetData = eval(req.body);
-		console.log(resetData);
+		//console.log(resetData);
 		var userid = resetData.userid;
 		var jsnRes = {};
 		var oldpassword = resetData.oldpassword;
@@ -244,7 +302,7 @@ module.exports = {
 		delete resetData.oldpassword;
 		delete resetData.confirmpassword;
 
-		console.log("req", resetData);
+		//console.log("req", resetData);
 		//return;
 		async.series([
 			function (userCb) {
@@ -260,9 +318,9 @@ module.exports = {
 						userCb({ error: 'User not found' });
 						return;
 					}
-					if(!userResult.encryptedpassword || userResult.encryptedpassword==""){
+					if (!userResult.encryptedpassword || userResult.encryptedpassword == "") {
 						userCb();
-						return;	
+						return;
 					}
 					var matchPass = bcrypt.compareSync(oldpassword, userResult['encryptedpassword']);
 
