@@ -158,16 +158,58 @@ module.exports = {
         })
     },
     getSubsport: function (req, res) {
-
-        Subsport.find({}).populate('sportid').exec(function (err, result) {
+           var sportArr = [];
+        Subsport.native(function (err, collection) {
             if (err)
-                return res.serverError(err);
+                return nearCb({ error: err });
 
-            if (result.length == 0)
-                return res.badRequest({ error: "Sport not found" });
+            collection.aggregate([
+                {
+                    $lookup: {
+                        from: "sport",
+                        localField: "sportid",
+                        foreignField: "_id",
+                        as: "sportdetail",
+                    }
+                },
+                {
+                    $group:
+                    {
+                        _id: {
+                            id: "$sportdetail._id",
+                            title: "$sportdetail.title",
+                            imageurl: "$sportdetail.imageurl"
+                        },
+                        subsport: {
+                            $push: {
+                                id: "$_id",
+                                title: "$title",
+                                value: "$value"
+                            }
+                        }
+                    }
+                }
+            ], function (err, result) {
+                if (err)
+                    return res.serverError(err);
 
-            res.send({ data: result });
-        })
+                if (result.length == 0) {
+                    res.badRequest({ error: "Sportlist not found" });
+                }
+
+                result.forEach(function (index) {
+                    var sport = {
+                        id: index._id["id"][0],
+                        title: index._id["title"][0],
+                        imageurl: index._id["imageurl"][0],
+                        subsport: index.subsport
+                    }
+                    sportArr.push(sport);
+                });
+
+                res.send({ data: sportArr });
+            });
+        });
     },
 
     getSportByKey: function (req, res) {

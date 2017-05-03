@@ -1,5 +1,7 @@
-var _ = require("lodash");
+var _$ = require("lodash");
 var ObjectId = require('mongodb').ObjectID;
+var moment = require("moment");
+
 module.exports = {
 
     CreateMatch: function (req, res) {
@@ -42,8 +44,8 @@ module.exports = {
             },
             function (matchCb) {
                 reqData.coordinates = [parseFloat(sportDetail.long), parseFloat(sportDetail.lat)];
-                //reqData.sport = fieldDetail.sport;
-                reqData.matchtime = new Date(reqData.matchtime).toISOString();
+
+                reqData.matchtime = moment(reqData.matchtime, "YYYY-MM-DD HH:mm:ss.Z").toDate();
 
                 Match.create(reqData).exec(function (err, matchData) {
                     if (err) {
@@ -112,6 +114,7 @@ module.exports = {
         var matchid = req.param("id");
         var matchObj;
         var teamArr = { teamid1: [], teamid2: [] };
+
         async.series([
             function (matchCb) {
                 Match.find({ id: matchid }).populateAll().exec(function (err, matchData) {
@@ -135,6 +138,8 @@ module.exports = {
                         return;
                     }
                     if (teamResult.length == 0) {
+                        Match.subscribe(req, _.pluck(matchObj, 'id'), ['message', 'destroy', 'update']);
+                        Match.watch(req);
                         teamCb();
                         return;
                     }
@@ -145,7 +150,12 @@ module.exports = {
                             teamArr.teamid2.push(index);
                         }
                     });
+
                     matchObj[0]['team'] = teamArr;
+
+                    Match.subscribe(req, _.pluck(matchObj, 'id'), ['message', 'destroy', 'update']);
+                    Match.watch(req);
+
                     teamCb();
                 });
             }
@@ -153,7 +163,8 @@ module.exports = {
             if (err)
                 res.badRequest(err);
             else
-                res.send({ data: matchObj })
+                res.send({ data: { data: matchObj, type: "matchsubscribe" } });
+
         });
 
     },
@@ -343,7 +354,7 @@ module.exports = {
                                     profileimage: 1,
                                     profilethumbimage: 1,
                                     sports: 1,
-                                    city:1
+                                    city: 1
                                 },
                                 sportcenterdetail: 1,
                                 sportdetail: 1,
@@ -360,7 +371,7 @@ module.exports = {
                             matchId.push(index._id);
                         });
 
-                        matchId = _.uniq(matchId, false);
+                        matchId = _$.uniq(matchId, false);
                         matchId = matchId.map(function (obj) { return ObjectId(obj) });
                         sendResult = result;
 
@@ -440,7 +451,7 @@ module.exports = {
                                     profileimage: 1,
                                     profilethumbimage: 1,
                                     sports: 1,
-                                    city:1
+                                    city: 1
                                 },
                                 sportcenterdetail: 1,
                                 sportdetail: 1,
@@ -456,7 +467,7 @@ module.exports = {
                             matchId.push(index._id);
                         });
 
-                        matchId = _.uniq(matchId, false);
+                        matchId = _$.uniq(matchId, false);
                         matchId = matchId.map(function (obj) { return ObjectId(obj) });
                         sendResult = result
 
@@ -511,8 +522,8 @@ module.exports = {
 
     ListMatchByUser: function (req, res) {
         var id = req.param("id");
-        var userdate=req.param("date");
-       
+        var userdate = req.param("date");
+
         id = new ObjectId(id);
         var matchId = [];
         var resultData;
@@ -523,7 +534,7 @@ module.exports = {
                         return nearByCb({ error: err });
 
                     collection.aggregate([
-                         {
+                        {
                             $lookup: {
                                 from: "match",
                                 localField: "matchid",
@@ -533,7 +544,7 @@ module.exports = {
                         },
                         {
                             $match: {
-                                $and: [{ 'userid': id },{'matchdetail.matchtime': {$gte: new Date(userdate)}}]
+                                $and: [{ 'userid': id }, { 'matchdetail.matchtime': { $gte: moment(userdate, "YYYY-MM-DD HH:mm:ss.Z").toDate() } }]
                             }
                         },
                         {
@@ -612,7 +623,7 @@ module.exports = {
                             index['matchplayercount'] = 0;
                             matchId.push(index.matchdetail[0]._id);
                         });
-                        matchId = _.uniq(matchId, false);
+                        matchId = _$.uniq(matchId, false);
                         matchId = matchId.map(function (obj) { return ObjectId(obj) });
 
                         resultData = result;
@@ -667,23 +678,21 @@ module.exports = {
     },
     JoinMatch: function (req, res) {
         var reqData = eval(req.body);
-        console.log("reqData",reqData);
-        
         var isteamid = false;
         var teamResult;
-        async.series([
 
+        async.series([
             function (teamfindCb) {
                 Team.findOne({ $and: [{ matchid: reqData.matchid }, { userid: reqData.userid }] }).exec(function (err, result) {
                     if (err)
                         return res.serverError(err);
 
                     if (typeof result != "undefined") {
-                        if (result.teamid == reqData.teamid) 
-                                isteamid = true;
+                        if (result.teamid == reqData.teamid && result.isbenchplayer == reqData.isbenchplayer)
+                            isteamid = true;
                     }
                     teamResult = result;
-                    console.log("teamResult",teamResult);
+                    console.log("teamResult", teamResult);
                     teamfindCb();
                 });
             },
@@ -692,23 +701,20 @@ module.exports = {
                     deleteteamCb();
                     return;
                 }
-                 console.log("delete",teamResult);
-                Team.destroy({id:teamResult.id}).exec(function(err,result){
-                        if(err)
-                            return res.serverError(err);
+                Team.destroy({ id: teamResult.id }).exec(function (err, result) {
+                    if (err)
+                        return res.serverError(err);
 
-                      deleteteamCb();
+                    deleteteamCb();
                 });
             },
             function (teamCb) {
-                if(isteamid == true){
+                if (isteamid == true) {
                     teamCb();
                     return;
                 }
-                console.log("create",teamResult);
                 Team.create(reqData).exec(function (err, result) {
                     if (err) {
-                        console.log("err", err);
                         var errmsg = [];
                         if (err.Errors) {
                             var arrErrors = err.Errors;
@@ -724,19 +730,77 @@ module.exports = {
                     if (!result) {
                         return teamCb({ error: "Somthing went wrong.Please try again" });
                     }
-                   
+
+                    Match.subscribe(req, result.matchid, ['message']);
+                    Match.message(result.matchid, {
+                        type: 'jointeam',
+                        data: result
+                    });
+
                     teamCb();
                 });
             }
-        ],function(err,finalResult){
-            if(err)
+        ], function (err, finalResult) {
+            if (err)
                 res.badRequest(err);
-            else 
-            res.send({ message: "You are join the match" });
+            else
+                res.send({ message: "You are join the match" });
         });
 
     },
+    SingleMatchTeamDetail: function (req, res) {
+        var matchid = req.param("id");
+        var matchObj;
+        var teamArr = { teamid1: [], teamid2: [] };
 
+        async.series([
+            function (matchCb) {
+                Match.find({ id: matchid }).populateAll().exec(function (err, matchData) {
+                    if (err) {
+                        res.serverError(err);
+                        return;
+                    }
+                    if (matchData.length == 0) {
+                        matchCb({ error: "This match id not found in our database" });
+                        return;
+                    }
+                    matchObj = matchData;
+                    matchCb();
+                });
+            },
+            function (teamCb) {
+                var matchId = matchObj[0].id;
+                Team.find({ matchid: matchId }).populate("userid").exec(function (err, teamResult) {
+                    if (err) {
+                        res.serverError(err);
+                        return;
+                    }
+                    if (teamResult.length == 0) {
+                        teamCb();
+                        return;
+                    }
+                    teamResult.forEach(function (index) {
+                        if (index.teamid == 1) {
+                            teamArr.teamid1.push(index);
+                        } else if (index.teamid == 2) {
+                            teamArr.teamid2.push(index);
+                        }
+                    });
+
+                    matchObj[0]['team'] = teamArr;
+
+                    teamCb();
+                });
+            }
+        ], function (err, finalResult) {
+            if (err)
+                res.badRequest(err);
+            else
+                res.send({ data: matchObj });
+
+        });
+
+    },
     LeaveMatch: function (req, res) {
         var userid = req.param("userid");
         var matchid = req.param("matchid");
@@ -751,14 +815,18 @@ module.exports = {
                 return res.badRequest({ error: "Somthing went wrong.Please try again" });
             }
 
-            res.send({ message: "You are leave the match" });
+            Match.message(result[0].matchid, {
+                type: 'leaveteam',
+                data: result
+            });
 
+            res.send({ message: "You are leave the match" });
         });
     },
     ListLastMatchByUser: function (req, res) {
         var id = req.param("id");
-        var userdate=req.param("date");
-       
+        var userdate = req.param("date");
+
         id = new ObjectId(id);
         var matchId = [];
         var resultData;
@@ -769,7 +837,7 @@ module.exports = {
                         return nearByCb({ error: err });
 
                     collection.aggregate([
-                         {
+                        {
                             $lookup: {
                                 from: "match",
                                 localField: "matchid",
@@ -779,7 +847,7 @@ module.exports = {
                         },
                         {
                             $match: {
-                                $and: [{ 'userid': id },{'matchdetail.matchtime': {$lt: new Date(userdate)}}]
+                                $and: [{ 'userid': id }, { 'matchdetail.matchtime': { $lt: moment(userdate, "YYYY-MM-DD HH:mm:ss.Z").toDate() } }]
                             }
                         },
                         {
@@ -853,12 +921,12 @@ module.exports = {
                         if (err)
                             return res.serverError(err);
 
-
                         result.forEach(function (index) {
                             index['matchplayercount'] = 0;
                             matchId.push(index.matchdetail[0]._id);
                         });
-                        matchId = _.uniq(matchId, false);
+
+                        matchId = _$.uniq(matchId, false);
                         matchId = matchId.map(function (obj) { return ObjectId(obj) });
 
                         resultData = result;
@@ -889,6 +957,9 @@ module.exports = {
                             if (err)
                                 return res.serverError(err);
 
+                            if (result.length == 0)
+                                return countCb({ error: "Lastmatches not found" });
+
                             result.forEach(function (index) {
                                 var rid = index['_id']['matchid'];
                                 resultData.forEach(function (invite) {
@@ -910,6 +981,21 @@ module.exports = {
                 else
                     res.send({ data: resultData });
             });
+    },
+    MatchUnsubscribe: function (req, res) {
+        var id = req.param("id");
+        Match.find({ id: id }).populateAll().exec(function (err, matchData) {
+            if (err)
+                return res.serverError(err);
+
+            if (matchData.length == 0)
+                return res.badRequest({ error: "Match not found" });
+
+               
+                Match.unsubscribe(req,matchData, 'id');
+            
+            return res.send("ok");
+        })
     }
 
 };

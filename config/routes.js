@@ -139,6 +139,14 @@ module.exports.routes = {
 		controller:"MatchController",
 		action:"SingleMatchDisplay"
 	},
+	"get /match/team/:id":{
+		controller:"MatchController",
+		action:"SingleMatchTeamDetail"
+	},
+	"get /match/unsubscribe/:id":{
+		controller:"MatchController",
+		action:"MatchUnsubscribe"
+	},
 	"post /match/nearby":{
 		controller:"MatchController",
 		action:"FindNearByMatch"
@@ -247,8 +255,17 @@ module.exports.routes = {
 	"get /changeemail/:activationlink":{
 		controller: "EmailchangeController",
 		action: "UpdateEmail",
-	}
+	},
 	
+
+	"post /chatmatch":{
+		controller:"ChatmatchController",
+		action:"CreateChatMatch"
+	},
+	"get /chatmatch/:id":{
+		controller:"ChatmatchController",
+		action:"getChatMatch"
+	},
 
 	/***************************************************************************
 	 *                                                                          *

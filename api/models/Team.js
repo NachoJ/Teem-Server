@@ -15,6 +15,10 @@ module.exports = {
             type: 'integer',
             enum: [1, 2]
             
+        },
+        isbenchplayer:{
+            type:"boolean",
+            defaultsTo:false
         }
     },
     validationMessages: { //hand for i18n & l10n

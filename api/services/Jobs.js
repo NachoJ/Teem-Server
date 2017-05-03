@@ -14,10 +14,15 @@ module.exports = {
             if(!job.data.inviter)
                 return cb(new Error("Invier detail not provided"));    
 
+            if(!job.data.invitationid)
+                return cb(new Error("Invitationid not provided"));    
+
              var user=new  User._model(job.data.user);
              var inviter=new  User._model(job.data.inviter);
+
+             var invitationid=job.data.invitationid;
              
-             user.sendInvitationEmail(user,inviter,function(err,res,data,token){
+             user.sendInvitationEmail(user,inviter,invitationid,function(err,res,data,token){
                     if(res){
                         cb(err,res,data);
                     }
@@ -46,10 +51,14 @@ module.exports = {
             if(!job.data.field)
                 return cb(new Error("Field detail not provided"));
 
-            var field=new Fields._model(job.data.field);
+            if(!job.data.fieldArr)
+                return cb(new Error("FieldArr  not provided"));    
+
+            var field=job.data.field;
+            var fieldArr=new Fields._model(job.data.fieldArr);
             var sportcenter=job.data.sportcenter;
 
-             field.sendFieldEmail(field,sportcenter,function(err,res,data){
+             fieldArr.sendFieldEmail(field,sportcenter,function(err,res,data){
                     if(res){
                         cb(err,res,data);
                     }

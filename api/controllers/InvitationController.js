@@ -7,10 +7,12 @@ module.exports = {
         var reqData = eval(req.body);
         var userids = [];
         var userid = reqData.userid;
+        var matchidLink=reqData.matchid;
+       
         userids = userid.split(",");
-        var useridIndex;
+        var useridIndex,invitationIdLink;
         delete reqData.userid;
-
+        
         async.series([
             function (notinviteCb) {
                 Invitation.find({ $and: [{ userid: { $in: userids } }, { matchid: reqData.matchid }] }).exec(function (err, invitationresult) {
@@ -23,7 +25,7 @@ module.exports = {
                         });
                     }
                 });
-                notinviteCb();
+                 notinviteCb();
             },
             function (notteamCb) {
                 Team.find({ $and: [{ userid: { $in: userids } }, { matchid: reqData.matchid }] }).exec(function (err, teamresult) {
@@ -48,7 +50,7 @@ module.exports = {
 
                     User.findOneById(reqData.inviterid).exec(function (err, inviterresult) {
                         User.findOneById(index).exec(function (err, userresult) {
-                            Jobs.create('sendInvitation', { user: userresult, inviter: inviterresult }).save(function (err, data, msg, token) { });
+                            Jobs.create('sendInvitation', { user: userresult, inviter: inviterresult,invitationid:matchidLink }).save(function (err, data, msg, token) { });
                         });
                     });
 
@@ -221,6 +223,9 @@ module.exports = {
                             if (err)
                                 return res.serverError(err);
 
+                             if(result.length==0)
+                                return inviteCb({error:"Invitation not found"});
+                                
                             result.forEach(function (index) {
                                 index['totalmatchplayer'] = 0;
                                 matchIds.push(index.matchdetail[0]._id);

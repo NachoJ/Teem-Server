@@ -213,9 +213,10 @@ module.exports = {
 				cb(err, res, msg, "token");
 			});
 		},
-		sendInvitationEmail: function (user, inviteruser, cb) {
+		sendInvitationEmail: function (user, inviteruser,invitationid, cb) {
 			var self = this;
-
+			var link=sails.config.siteUrl+'/match-details/'+invitationid;
+			
 			// Send email
 			var email = new Email._model({
 				to: {
@@ -225,7 +226,7 @@ module.exports = {
 				subject: "Teem web Invitation email",
 				data: {
 					fullname: user.username,
-					invitationmsg: inviteruser.username + " has invite to join the match"
+					invitationmsg: "<a href='"+link+"'>"+inviteruser.username + " has invite to join the match</a>"
 				},
 				tags: ['invitation', 'invitational'],
 				template: 'invitation'

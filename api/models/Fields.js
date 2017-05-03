@@ -54,7 +54,7 @@ module.exports = {
 					lat:sportcenter.lat,
 					long:sportcenter.long,
                     username:sportcenter.userid.username,
-					field:JSON.stringify(field,null, "\t"),
+					field:field,
                          
               	},
 				tags: ['field'],

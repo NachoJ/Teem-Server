@@ -5,6 +5,7 @@ module.exports = {
         var insertOrUpdateData, deleteData;
         var insertArr = [];
         var updateArr = [];
+        var subsportArr = [];
         var dataObj, subsportlist, sportcenterDetail, fieldInsertData;
 
         //console.log(reqData,"reqData");
@@ -74,7 +75,7 @@ module.exports = {
                     fieldCb();
                     return;
                 }
-                console.log("insertArr1", insertArr);
+                // console.log("insertArr1", insertArr);
                 Fields.create(insertArr).exec(function (err, fieldData) {
                     if (err) {
                         var errmsg = [];
@@ -139,12 +140,81 @@ module.exports = {
                     sportcenterCb();
                 });
             },
+            function (subsportCb) {
+                if (!fieldInsertData) {
+                    subsportCb();
+                    return;
+                }
+                Subsport.find({}).populate('sportid').exec(function (err, result) {
+                    if (err)
+                        return res.serverError(err);
+
+                    result.forEach(function (index) {
+                        subsportArr[index.id] = index;
+                    });
+                    subsportCb();
+                });
+            },
             function (joinCb) {
                 if (!fieldInsertData) {
                     joinCb();
                     return;
                 }
-                Jobs.create('sendFieldDetail', { sportcenter: dataObj.data, field: fieldInsertData })
+                var fieldsText = "";
+                fieldInsertData.forEach(function (filed) {
+                    var sportTextArr = "";
+                    var sportArr = filed.sport;
+                    sportArr = sportArr.split(",");
+
+                    sportArr.forEach(function (index) {
+                        if (index == subsportArr[index].id) {
+                            sportTextArr += subsportArr[index].sportid.title + "(" + subsportArr[index].title + "),";
+                        }
+                    });
+
+                    if (sportTextArr.charAt(sportTextArr.length - 1) == ',') {
+                        sportTextArr = sportTextArr.substr(0, sportTextArr.length - 1);
+                    }
+                    
+                    fieldsText += "<table>";
+
+                    fieldsText += "<tr>";
+                    fieldsText += "<td><b>Name</b></td>";
+                    fieldsText += "<td><b>:</b></td> <td><span style='color:#01579b;'>" + filed.name + "</span></td>";
+                    fieldsText += "</tr>";
+
+                    fieldsText += "<tr>";
+                    fieldsText += "<td><b>Covering</b></td>";
+                    fieldsText += "<td><b>:</b></td> <td><span style='color:#01579b;'>" + filed.covering + "</span></td>";
+                    fieldsText += "</tr>";
+
+                    fieldsText += "<tr>";
+                    fieldsText += "<td><b>Light</b></td>";
+                    fieldsText += "<td><b>:</b></td> <td><span style='color:#01579b;'>" + filed.lights + "</span></td>";
+                    fieldsText += "</tr>";
+
+                    fieldsText += "<tr>";
+                    fieldsText += "<td><b>Surface</b></td>";
+                    fieldsText += "<td><b>:</b></td> <td><span style='color:#01579b;'>" + filed.surface + "</span></td>";
+                    fieldsText += "</tr>";
+
+                    fieldsText += "<tr>";
+                    fieldsText += "<td><b>Sports</b></td>";
+                    fieldsText += "<td><b>:</b></td> <td><span style='color:#01579b;'>" + sportTextArr + "</span></td>";
+                    fieldsText += "</tr>";
+
+                    fieldsText += "<tr>";
+                    fieldsText += "<td><b>Price</b></td>";
+                    fieldsText += "<td><b>:</b></td> <td><span style='color:#01579b;'>" + filed.price + "</span></td>";
+                    fieldsText += "</tr>";
+
+                    fieldsText += "</table>"
+                    fieldsText += "<br/>"
+
+                });
+                // console.log("fieldsText", fieldsText);
+
+                Jobs.create('sendFieldDetail', { sportcenter: dataObj.data, field: fieldsText, fieldArr: fieldInsertData })
                     .save(function (err, data, msg, token) { });
 
                 joinCb();
