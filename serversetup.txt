@@ -74,3 +74,58 @@ sudo a2enmod proxy
 sudo a2enmod ssl
 
 sudo a2enmod proxy_wstunnel
+
+
+//------------ PHP Server Setup ---------
+
+sudo apt-get install python-software-properties
+sudo add-apt-repository ppa:ondrej/php
+sudo apt-get update
+sudo apt-get install php7.1
+
+sudo apt-cache search php7-*
+sudo apt-get install php7.1-fpm
+
+a2enmod proxy_fcgi setenvif
+a2enconf php7.1-fpm
+
+sudo apt-get install libapache2-mod-php7.1 php7.1-curl php7.1-json
+sudo apt-get install php7.1-mbstring
+sudo apt-get install php-xml
+
+sudo apt-get install php-pear php7.1-dev
+
+pear config-set php_ini /etc/php/7.1/apache2/php.ini
+pecl config-set php_ini /etc/php/7.1/apache2/php.ini
+
+sudo pecl install mongodb
+
+sudo apt-get install zip unzip php7.1-zip
+
+//----- uinstall php7.1
+
+sudo apt-get purge php7.*
+
+//----------- php 5.6 Setup
+sudo add-apt-repository ppa:ondrej/php
+sudo apt-get update
+sudo apt-get install php5.6
+
+sudo apt-cache search php5-*
+sudo apt-get install php5.6-fpm
+
+a2enmod proxy_fcgi setenvif
+a2enconf php5.6-fpm
+
+sudo apt-get install php5.6-curl
+sudo apt-get install php5.6-mbstring
+sudo apt-get install php-xml
+
+sudo apt-get install php-pear php5.6-dev
+
+pear config-set php_ini /etc/php/5.6/apache2/php.ini
+pecl config-set php_ini /etc/php/5.6/apache2/php.ini
+
+sudo pecl install mongodb
+
+//------------ After this install composer globally - get instruction from composer website itself

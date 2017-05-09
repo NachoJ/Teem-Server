@@ -147,7 +147,7 @@ module.exports = {
 						return res.serverError(err);
 
 					userStore = user;
-					console.log("userStore", userStore);
+					//console.log("userStore", userStore);
 					usersCb();
 				});
 			},
@@ -156,6 +156,7 @@ module.exports = {
 					createCb();
 					return;
 				}
+				
 				User.create(registerData).exec(function (err, result) {
 					if (err) {
 						return res.serverError(err);
@@ -169,6 +170,10 @@ module.exports = {
 					updateCb();
 					return;
 				}
+				delete registerData.city;
+
+				if(registerData.dob=="")
+					delete registerData.dob;
 
 				User.update({ id: userStore.id }, registerData).exec(function (err, result) {
 					if (err) {
@@ -182,7 +187,7 @@ module.exports = {
 				var imageName = profileImage.split('/').pop().replace(/\#(.*?)$/, '').replace(/\?(.*?)$/, '');
 
 
-				console.log("userUpdateProfile", userUpdateProfile);
+				//console.log("userUpdateProfile", userUpdateProfile);
 				if (userUpdateProfile && userUpdateProfile.profileimage != imageName) {
 
 					var oldProfileImage = "";
@@ -239,7 +244,8 @@ module.exports = {
 
 			var jsonData = {
 				isactive: true,
-				activationlink: ""
+				activationlink: "",
+				activateddate : moment().toISOString()
 			};
 
 			User.update({ id: user.id }, jsonData).exec(function (err, uerupdate) {

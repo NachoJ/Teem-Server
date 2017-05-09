@@ -692,12 +692,16 @@ module.exports = {
                             isteamid = true;
                     }
                     teamResult = result;
-                    console.log("teamResult", teamResult);
                     teamfindCb();
                 });
             },
             function (deleteteamCb) {
                 if (isteamid == true || typeof teamResult == "undefined") {
+                    if (isteamid == true) {
+                        Match.message(teamResult.matchid, {
+                            type: 'jointeam'
+                        });
+                    }
                     deleteteamCb();
                     return;
                 }
@@ -706,6 +710,21 @@ module.exports = {
                         return res.serverError(err);
 
                     deleteteamCb();
+                });
+            },
+            function (inviteCb) {
+                Invitation.find({ $and: [{ matchid: reqData.matchid }, { userid: reqData.userid }] }).exec(function (err, result) {
+                    if (err)
+                        return res.serverError(err);
+
+                    if (result.length == 0) {
+                        inviteCb();
+                        return;
+                    }
+
+                    result[0].accepted = 'yes';
+                    result[0].save();
+                    inviteCb();
                 });
             },
             function (teamCb) {
@@ -740,6 +759,7 @@ module.exports = {
                     teamCb();
                 });
             }
+
         ], function (err, finalResult) {
             if (err)
                 res.badRequest(err);
@@ -804,24 +824,60 @@ module.exports = {
     LeaveMatch: function (req, res) {
         var userid = req.param("userid");
         var matchid = req.param("matchid");
+        var teamDelResult,bplayerResult;
+        async.series([
+            function (teamCb) {
+                Team.destroy({ $and: [{ userid: userid }, { matchid: matchid }] }).exec(function (err, result) {
+                    if (err) {
+                        res.serverError(err);
+                        return;
+                    }
 
-        Team.destroy({ $and: [{ userid: userid }, { matchid: matchid }] }).exec(function (err, result) {
-            if (err) {
-                res.serverError(err);
-                return;
+                    if (!result) {
+                        return res.badRequest({ error: "Somthing went wrong.Please try again" });
+                    }
+                    teamDelResult = result;
+                    teamCb();
+                });
+            },
+            function (bplayerCb) {
+                if(teamDelResult.length==0){
+                    bplayerCb();
+                    return;
+                }
+                var matchid=teamDelResult[0].matchid;
+                var teamid=teamDelResult[0].teamid;
+              
+                Team.findOne({$and:[{matchid:matchid},{teamid:teamid},{isbenchplayer:true}]}).exec(function(err,result){
+                        if(err)
+                            return res.serverError(err);
+                      
+                        if(typeof result=="undefined")
+                        {
+                            bplayerCb();
+                            return;   
+                        }
+                     
+                        result.isbenchplayer=false,
+                        result.save();
+                        bplayerCb();
+                });
+            },
+            function (msgCb) {
+                Match.message(teamDelResult[0].matchid, {
+                    type: 'leaveteam',
+                    data: teamDelResult
+                });
+                msgCb();
             }
-
-            if (!result) {
-                return res.badRequest({ error: "Somthing went wrong.Please try again" });
-            }
-
-            Match.message(result[0].matchid, {
-                type: 'leaveteam',
-                data: result
+        ],
+            function (err, finalResult) {
+                if (err)
+                    res.badRequest(err);
+                else
+                    res.send({ message: "You are leave the match" });
             });
 
-            res.send({ message: "You are leave the match" });
-        });
     },
     ListLastMatchByUser: function (req, res) {
         var id = req.param("id");
@@ -991,9 +1047,9 @@ module.exports = {
             if (matchData.length == 0)
                 return res.badRequest({ error: "Match not found" });
 
-               
-                Match.unsubscribe(req,matchData, 'id');
-            
+
+            Match.unsubscribe(req, matchData, 'id');
+
             return res.send("ok");
         })
     }

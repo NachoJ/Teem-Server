@@ -10,3 +10,8 @@ db.createUser(
      roles: [ "readWrite", "dbAdmin" ]
    }
 )
+
+
+git init .
+git remote add -t \* -f origin git@103.250.188.226:chintan/TeemLaravel.git
+git checkout -f master

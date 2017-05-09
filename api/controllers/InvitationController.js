@@ -1,5 +1,6 @@
 var ObjectId = require('mongodb').ObjectID;
 var _ = require("lodash");
+var moment = require("moment");
 module.exports = {
 
     createInvitation: function (req, res) {
@@ -121,6 +122,8 @@ module.exports = {
     invitationList: function (req, res) {
         var id = req.param("id");
         id = new ObjectId(id);
+        var userdate = req.param("date");
+        userdate=new Date(userdate);
         var invitation;
         var matchIds = [];
         async.series([
@@ -130,17 +133,18 @@ module.exports = {
                         return nearByCb({ error: err });
 
                     collection.aggregate([
-                        {
-                            $match: {
-                                $and: [{ 'userid': id }, { accepted: "no" }]
-                            }
-                        },
+                        
                         {
                             $lookup: {
                                 from: "match",
                                 localField: "matchid",
                                 foreignField: "_id",
                                 as: "matchdetail"
+                            }
+                        },
+                        {
+                            $match: {
+                                $and: [{ 'userid': id }, { accepted: "no" },{ "matchdetail.matchtime": { $gt: userdate } }]
                             }
                         },
                         {

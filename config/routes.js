@@ -234,7 +234,7 @@ module.exports.routes = {
 		controller:"InvitationController",
 		action:"DeleteInvitation"
 	},
-	"get /invitation/search/:id":{
+	"get /invitation/search/:id/:date":{
 		controller:"InvitationController",
 		action:"invitationList"
 	},
