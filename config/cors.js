@@ -72,7 +72,6 @@ module.exports.cors = {
   * response to preflight requests.                                          *
   *                                                                          *
   ***************************************************************************/
-
-  headers: 'content-type,Authorization,Cache-Control,X-Requested-With,x-csrf-token'
+  headers: 'content-type,Authorization,Cache-Control,X-Requested-With,x-csrf-token,x-xsrf-token,Access-Control-Allow-Headers,Access-Control-Request-Headers,Access-Control-Allow-Origin'
 
 };

@@ -268,6 +268,7 @@ module.exports = {
         var reqData = eval(req.body);
         var sendResult;
         var sport = reqData.sport;
+        var matchdate=reqData.date;
         var matchId = [];
         var conditions = {
             long: parseFloat(reqData.long) || 0,
@@ -282,7 +283,7 @@ module.exports = {
                     return;
                 }
                 sport = new ObjectId(sport);
-
+       
                 Match.native(function (err, collection) {
                     if (err)
                         return nearCb({ error: err });
@@ -302,7 +303,7 @@ module.exports = {
                         },
                         {
                             $match: {
-                                $or: [{ 'sport': sport }, { 'subsportid': sport }]
+                               $and:[{'matchtime':{ $gte: moment(matchdate, "YYYY-MM-DD HH:mm:ss.Z").toDate() }},{ $or: [{ 'sport': sport }, { 'subsportid': sport }] }]
                             }
                         },
                         {
@@ -401,6 +402,11 @@ module.exports = {
                                 distanceField: "distance"
                             },
 
+                        },
+                        {
+                            $match: {
+                                $and: [{'matchtime':{ $gte: moment(matchdate, "YYYY-MM-DD HH:mm:ss.Z").toDate() }}]
+                            }
                         },
                         {
                             $lookup: {
@@ -841,7 +847,7 @@ module.exports = {
                 });
             },
             function (bplayerCb) {
-                if(teamDelResult.length==0){
+                if(teamDelResult.length==0 || teamDelResult[0].isbenchplayer==true){
                     bplayerCb();
                     return;
                 }
@@ -903,7 +909,7 @@ module.exports = {
                         },
                         {
                             $match: {
-                                $and: [{ 'userid': id }, { 'matchdetail.matchtime': { $lt: moment(userdate, "YYYY-MM-DD HH:mm:ss.Z").toDate() } }]
+                                $and: [{ 'userid': id }, { 'matchdetail.matchtime': { $lt: moment(userdate, "YYYY-MM-DD HH:mm:ss.Z").toDate() } },{'matchdetail.iscancelmatch':false}]
                             }
                         },
                         {
