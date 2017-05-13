@@ -113,13 +113,15 @@ sudo apt-get install php5.6
 
 sudo apt-cache search php5-*
 sudo apt-get install php5.6-fpm
+sudo apt-get install php5.6-cli
 
 a2enmod proxy_fcgi setenvif
 a2enconf php5.6-fpm
 
+sudo apt-get install php5.6-cgi
 sudo apt-get install php5.6-curl
 sudo apt-get install php5.6-mbstring
-sudo apt-get install php-xml
+sudo apt-get install php5.6-xml
 
 sudo apt-get install php-pear php5.6-dev
 

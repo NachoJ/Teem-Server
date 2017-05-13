@@ -608,7 +608,7 @@ module.exports = {
                                 matchdetail: { $push: "$matchdetail" }
                             }
                         },
-
+                        
                         {
                             $project: {
                                 _id: 1,
@@ -909,7 +909,7 @@ module.exports = {
                         },
                         {
                             $match: {
-                                $and: [{ 'userid': id }, { 'matchdetail.matchtime': { $lt: moment(userdate, "YYYY-MM-DD HH:mm:ss.Z").toDate() } },{'matchdetail.iscancelmatch':false}]
+                                $and: [{ 'userid': id }, { 'matchdetail.matchtime': { $lt: moment(userdate, "YYYY-MM-DD HH:mm:ss.Z").toDate() } }]
                             }
                         },
                         {

@@ -49,6 +49,15 @@ module.exports = {
         price:{
             type:'string',
             defaultsTo:""
+        },
+        isprematch:{
+            type:'boolean',
+            defaultsTo:false
+        },
+        
+        iscancelmatch:{
+            type:'boolean',
+            defaultsTo:false
         }
      },
      validationMessages: { 
