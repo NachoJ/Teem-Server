@@ -529,7 +529,7 @@ module.exports = {
     ListMatchByUser: function (req, res) {
         var id = req.param("id");
         var userdate = req.param("date");
-
+		//console.log("date",moment(userdate, "YYYY-MM-DD HH:mm.Z").toDate());
         id = new ObjectId(id);
         var matchId = [];
         var resultData;
@@ -550,7 +550,7 @@ module.exports = {
                         },
                         {
                             $match: {
-                                $and: [{ 'userid': id }, { 'matchdetail.matchtime': { $gte: moment(userdate, "YYYY-MM-DD HH:mm:ss.Z").toDate() } }]
+                                $and: [{ 'userid': id }, { 'matchdetail.matchtime': { $gte: moment(userdate, "YYYY-MM-DD HH:mm.Z").toDate() } }]
                             }
                         },
                         {
@@ -909,7 +909,7 @@ module.exports = {
                         },
                         {
                             $match: {
-                                $and: [{ 'userid': id }, { 'matchdetail.matchtime': { $lt: moment(userdate, "YYYY-MM-DD HH:mm:ss.Z").toDate() } }]
+                                $and: [{ 'userid': id }, { 'matchdetail.matchtime': { $lt: moment(userdate, "YYYY-MM-DD HH:mm.Z").toDate() } }]
                             }
                         },
                         {

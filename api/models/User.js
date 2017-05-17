@@ -226,7 +226,7 @@ module.exports = {
 				subject: "Teem web Invitation email",
 				data: {
 					fullname: user.username,
-					invitationmsg: "<a href='"+link+"'>"+inviteruser.username + " has invite to join the match</a>"
+					invitationmsg: link
 				},
 				tags: ['invitation', 'invitational'],
 				template: 'invitation'

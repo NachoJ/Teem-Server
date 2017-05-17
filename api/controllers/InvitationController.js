@@ -77,7 +77,7 @@ module.exports = {
             if (err)
                 res.badRequest(err);
             else
-                res.send({ "message": "Inviation send successfully" });
+                res.send({ "message": "Invitation send successfully" });
         })
 
     },
@@ -123,7 +123,8 @@ module.exports = {
         var id = req.param("id");
         id = new ObjectId(id);
         var userdate = req.param("date");
-        userdate=new Date(userdate);
+        //userdate=new Date(userdate);
+        userdate=moment(userdate, "YYYY-MM-DD HH:mm.Z").toDate();
         var invitation;
         var matchIds = [];
         async.series([
@@ -321,7 +322,7 @@ module.exports = {
     userSearchList: function (req, res) {
         var text = req.param("text");
         var id = req.param("id");
-        User.find({ id: { $ne: id }, $or: [{ email: new RegExp(text, 'i') }, { username: new RegExp(text, 'i') }, { firstname: new RegExp(text, 'i') }, { lastname: new RegExp(text, 'i') }], select: ['firstname', 'lastname', 'profileimage', 'profilethumbimage'] })
+        User.find({ id: { $ne: id }, $or: [{ email: new RegExp(text, 'i') }, { username: new RegExp(text, 'i') }, { firstname: new RegExp(text, 'i') }, { lastname: new RegExp(text, 'i') }], select: ['firstname', 'lastname', 'profileimage', 'username','email'] })
             .exec(function (err, result) {
                 if (err)
                     return res.serverError(err);
