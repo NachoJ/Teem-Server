@@ -33,6 +33,14 @@ module.exports = {
             model:"user",
             required:true
         },
+		ispublic:{
+			type:'boolean',
+			defaultsTo:false
+		},
+		isreviewed:{
+			type:'boolean',
+			defaultsTo:false
+		},
         sendSportcenterEmail: function(user,cb) {
             console.log("mail",user);
 			var self = this;

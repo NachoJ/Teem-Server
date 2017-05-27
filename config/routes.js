@@ -267,6 +267,43 @@ module.exports.routes = {
 		action:"getChatMatch"
 	},
 
+
+	"get /search/:text/:userid":{
+		controller:"SearchController",
+		action:"userAndSportcenterSearch"
+	},
+	"get /user/search/:id":{
+		controller:"SearchController",
+		action:"userSearchDetail"
+	},
+	"get /sportcenter/search/:id":{
+		controller:"SearchController",
+		action:"sportcenterSearchDetail"
+	},
+
+
+	"post /user/followers":{
+		controller:"SearchController",
+		action:"addUserFollowers"
+	},
+	"post /sportcenter/followers":{
+		controller:"SearchController",
+		action:"addScFollowers"
+	},
+	"delete /unfollow/:type/:userid/:followingid":{
+		controller:"SearchController",
+		action:"unFollowed"
+	},
+	"get /followers/:userid":{
+		controller:"SearchController",
+		action:"userFollowers"
+	},
+	"get /following/:userid":{
+		controller:"SearchController",
+		action:"userFollowing"
+	}
+
+	
 	/***************************************************************************
 	 *                                                                          *
 	 * Custom routes here...                                                    *

@@ -6,15 +6,17 @@ module.exports = {
         var insertArr = [];
         var updateArr = [];
         var subsportArr = [];
-        var dataObj, subsportlist, sportcenterDetail, fieldInsertData;
-
+	    var dataObj, subsportlist, sportcenterDetail, fieldInsertData;
+		var userid=reqData.userid;
         //console.log(reqData,"reqData");
         insertOrUpdateData = reqData.fields;
         deleteData = reqData.deleteids;
-        var subsportid = [];
+	    var subsportid = [];
 
         if (insertOrUpdateData.length > 0) {
             insertOrUpdateData.forEach(function (index) {
+				index['userid']=userid;
+
                 if (!index.id)
                     insertArr.push(index);
                 else

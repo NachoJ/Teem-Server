@@ -3,75 +3,88 @@ var fs = require("fs");
 
 module.exports = {
 
-    ProfileUpdate: function (req, res) {
-        var reqData = eval(req.body);
-		
-        var userid = reqData.userid;
-        delete reqData.userid;
-		
-        reqData.dob = moment(new Date(reqData.dob)).toISOString();
+	ProfileUpdate: function(req, res) {
+		var reqData = eval(req.body);
 
-        User.update({ id: userid }, reqData).exec(function afterwards(err, userData) {
-            if (err) {
-                res.serverError(err);
-            }
-            if (!userData.length) {
-                return res.badRequest({ error: "User record not found in our database" });
-            }
-            res.send({ data: { data: userData[0], message: "User update successfully" } });
-        });
-    },
+		var userid = reqData.userid;
+		delete reqData.userid;
 
-    profileImageUpload: function (req, res) {
+		reqData.dob = moment(new Date(reqData.dob)).toISOString();
 
-        var userid =req.param("userid");
-      	var reqData={};
-		
-        var folderPath = sails.config.paths.public;
-        var imagePath = folderPath + '/upload/profiles';
-        var origifilename = req.file('profile')._files[0].stream.filename;
-        
-        var newfilename = moment().utc().unix() + "_" + origifilename;
+		User.update({ id: userid }, reqData).exec(function afterwards(err, userData) {
+			if (err) {
+				res.serverError(err);
+			}
+			if (!userData.length) {
+				return res.badRequest({ error: "User record not found in our database" });
+			}
+			var actJsn = {
+				userid: userData[0].id,
+				activitydate: new Date(),
+				activitytype: "profileUpdated",
+				onitem: "user"
+			};
+			res.send({ data: userData[0], message: "User update successfully", activity: actJsn });
+		});
+	},
 
-        User.findOneById(userid).exec(function (err, result) {
-            if (err)
-                return res.serverError(err);
+	profileImageUpload: function(req, res) {
 
-            if (typeof result == "undefined")
-                return res.badRequest({ error: "User not found" });
+		var userid = req.param("userid");
+		var reqData = {};
 
-            req.file('profile').upload({
-                saveAs: newfilename,
-                dirname: imagePath
-            },function whenDone(err, uploadedFiles) {
-                if (err) {
-                    return res.negotiate(err);
-                }
+		var folderPath = sails.config.paths.public;
+		var imagePath = folderPath + '/upload/profiles';
+		var origifilename = req.file('profile')._files[0].stream.filename;
 
-                if (uploadedFiles.length === 0) {
-                    return res.badRequest('No file was uploaded');
-                }
+		var newfilename = moment().utc().unix() + "_" + origifilename;
 
-                reqData['profileimage'] = newfilename;
-              
-                 if(result.profileimage!=""){
-                        fs.unlink(imagePath + '/' + result.profileimage, function (err) {
-                        if (err) 
-                            console.log(err);
-                        });
-                }
+		User.findOneById(userid).exec(function(err, result) {
+			if (err)
+				return res.serverError(err);
 
-                User.update({ id: userid }, reqData).exec(function afterwards(err, userData) {
-                    if (err) {
-                        res.serverError(err);
-                    }
-                    if (!userData.length) {
-                        return res.badRequest({ error: "User record not found in our database" });
-                    }
-                    res.send({ data: { data: userData[0], message: "User update successfully" } });
-                });
-            });
-        });
-    }
+			if (typeof result == "undefined")
+				return res.badRequest({ error: "User not found" });
+
+			req.file('profile').upload({
+				saveAs: newfilename,
+				dirname: imagePath
+			}, function whenDone(err, uploadedFiles) {
+				if (err) {
+					return res.negotiate(err);
+				}
+
+				if (uploadedFiles.length === 0) {
+					return res.badRequest('No file was uploaded');
+				}
+
+				reqData['profileimage'] = newfilename;
+
+				if (result.profileimage != "") {
+					fs.unlink(imagePath + '/' + result.profileimage, function(err) {
+						if (err)
+							console.log(err);
+					});
+				}
+
+				User.update({ id: userid }, reqData).exec(function afterwards(err, userData) {
+					if (err) {
+						res.serverError(err);
+					}
+					if (!userData.length) {
+						return res.badRequest({ error: "User record not found in our database" });
+					}
+					var actJsn = {
+						userid: userData[0].id,
+						activitydate: new Date(),
+						activitytype: "profileUpdated",
+						onitem: "user"
+					};
+
+					res.send({ data: userData[0], message: "User update successfully", activity: actJsn });
+				});
+			});
+		});
+	}
 
 };

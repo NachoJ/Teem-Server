@@ -2,8 +2,8 @@ module.exports = {
 
     CreateSportcenter: function (req, res) {
         var reqData = eval(req.body);
-        var dataObj, sportcenterObj;
-
+        var dataObj, sportcenterObj,actObj;
+		
         if (!reqData.name || !reqData.address || !reqData.phone || !reqData.description)
             return res.badRequest({ error: "name or address or phone or description is reqired" });
 
@@ -38,11 +38,18 @@ module.exports = {
                         Jobs.create('sendSportcenterDetail', { sportcenter: sportcenterObj,user:userResult })
                             .save(function (err, data, msg, token) { });
                         
+						actObj={
+							userid: sportcenterObj.userid,
+							activitydate: sportcenterObj.createdAt,
+							activitytype: "added",
+							onitem: "sportcenter",
+							onactivityid: sportcenterObj.id
+						};
+
                         dataObj = {
-                            data: {
                                 message: "Sportcenter create successfully",
-                                data: sportcenterObj
-                            }
+                                data: sportcenterObj,
+								activity:actObj
                         }
                         userCb();
                     }
@@ -114,7 +121,7 @@ module.exports = {
     UpdateSportcenter: function (req, res) {
         var reqData = eval(req.body);
         var sportid = reqData.id;
-        var scData;
+        var scData,actObj;
         var findmatch;
         delete reqData.id;
         console.log("reqData", reqData);
@@ -135,6 +142,15 @@ module.exports = {
                         //res.send({message: "Sportcenter update  successfully"});
                         //console.log("sportData",sportData);
                         scData = sportData;
+
+						actObj={
+							userid: sportData[0].userid,
+							activitydate: sportData[0].updatedAt,
+							activitytype: "updated",
+							onitem: "sportcenter",
+							onactivityid: sportData[0].id
+						};
+
                         sportUpdate();
                     });
             },
@@ -173,7 +189,7 @@ module.exports = {
             if (err)
                 res.badRequest(err);
             else
-                res.send({ message: "Sportcenter update  successfully" });
+                res.send({ message: "Sportcenter update  successfully",activity:actObj });
         });
 
     },

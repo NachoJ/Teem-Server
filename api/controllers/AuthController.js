@@ -21,11 +21,16 @@ module.exports = {
 				if (!user.isactive) {
 					return res.badRequest({ error: "please activate your account" });
 				}
+				var actJsn={
+							userid: user.id,
+							activitydate: new Date(),
+							activitytype: "loggedin",
+							onitem: "user"
+					};
+
 				return res.send({
-					data: {
-						user: user
-						// token: jwToken.issue({id : user.id })
-					}
+						user: user,
+						activity:actJsn
 				});
 			});
 		});
@@ -209,10 +214,19 @@ module.exports = {
 							profileimage: filename.image
 						};
 
+						
 						User.update({ id: userUpdateProfile.id }, jsonObj).exec(function (err, userresult) {
+							var actJsn={
+									userid: userresult[0].id,
+									activitydate: new Date(),
+									activitytype: "loggedin",
+									onitem: "user"
+								};
+
 							userData = {
 								message: "Facebook login successfully.",
-								data: userresult[0]
+								data: userresult[0],
+								activity:actJsn
 							};
 							updateProfileCb(null, userUpdateProfile);
 						});
@@ -252,9 +266,16 @@ module.exports = {
 				if (err) {
 					return res.serverError(err);
 				}
+				var actJsn={
+							userid: uerupdate[0].id,
+							activitydate: new Date(),
+							activitytype: "activated",
+							onitem: "user"
+						};
 
 				return res.send({
-					message: "Your account has been activated. Welcome to Teem Players."
+					message: "Your account has been activated. Welcome to Teem Players.",
+					activity:actJsn
 				});
 			});
 			// user.activateAccount(function (err) {
@@ -290,8 +311,16 @@ module.exports = {
 					return res.serverError(err);
 				}
 				//console.log("userupdate", userupdate);
+				var actJsn={
+							userid: userupdate[0].id,
+							activitydate: new Date(),
+							activitytype: "passwordreset",
+							onitem: "user"
+						};
+
 				return res.send({
-					message: "Reset password success."
+					message: "Reset password success.",
+					activity:actJsn
 				});
 			});
 
@@ -348,8 +377,16 @@ module.exports = {
 						return;
 					}
 
-					jsnRes['message'] = "Password update successfully";
+					var actJsn={
+							userid: updated[0].id,
+							activitydate: new Date(),
+							activitytype: "passwordupdated",
+							onitem: "user"
+						};
 
+					jsnRes['message'] = "Password update successfully";
+					jsnRes['activity']=actJsn;
+					
 					userUpdateCb();
 
 				});

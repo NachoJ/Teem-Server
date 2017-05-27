@@ -58,6 +58,10 @@ module.exports = {
         iscancelmatch:{
             type:'boolean',
             defaultsTo:false
+        },
+		iscompletedmatch:{
+            type:'boolean',
+            defaultsTo:false
         }
      },
      validationMessages: { 
@@ -91,30 +95,7 @@ module.exports = {
         paymenttype:{
             required: 'Paymenttype  is required'
         }
-   },
-    beforeDestroy: function (criteria, next){
-        // Viewfoo.findOneById(criteria.where.id).exec(function (err, viewfooData) {
-        //     ContainerImage.destroy({viewfooid: criteria.where.id}).exec(function (err, imgdata) {
-        //         if (err) {
-        //             next("not found");
-        //         }
-        //         var file=viewfooData.userid + '/' + viewfooData.id + '/';
-        //         fileuploadService.deleteFiles(file, function (filename, log) {
-        //             if (filename.status == false) {
-        //             }
-        //         });
-        //         //console.log("containermimg", imgdata);
-        //         Container.destroy({viewfooid: criteria.where.id}).exec(function (err, container) {
-        //         if (err) {
-        //             next("not found");
-        //         }
-        //         //console.log("container", container);
-        //     });
-        //     next();
-        //     });
-
-        // });
-    }
-   
+   }
+    
      
 };
