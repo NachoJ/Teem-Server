@@ -177,11 +177,11 @@ module.exports.routes = {
 		controller:"SportsController",
 		action:"getSportByKey"
 	},
-	"post /sport":{
+	"get /sportcreate":{ 
 		controller:"SportsController",
 		action:"CreateSport"
 	},
-	"post /subsport":{
+	"get /subsportcreate":{
 		controller:"SportsController",
 		action:"CreateSubsport"
 	},
