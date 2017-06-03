@@ -1,3 +1,94 @@
+//--- Initial setup ubuntu digital ocean ---
+
+root password: d3a1ee0783164ae7
+> Login to digital ocean using root password
+> Add new sudo user
+   
+    adduser --disabled-password teemweb
+        # Enter Password: teemweb@30May2017        
+    
+    > Delete ubuntu user password
+        sudo visudo
+            add this line: teemweb ALL=(ALL) NOPASSWD:ALL
+        sudo passwd -d `whoami`
+
+> Set Root Privileges
+
+    usermod -aG sudo teemweb
+
+> Add Public Key Authentication 
+ > Generate a Key Pair
+    use below command in your local machine 
+    
+    ssh-keygen
+
+    > save it with id_rsaTeemweb
+ 
+ > Copy the Public Key to the server : Manually Install the Key
+    > login as teemweb 
+       su - teemweb
+    > Create new Directory for .ssh
+       mkdir ~/.ssh
+       chmod 700 ~/.ssh
+    
+       nano ~/.ssh/authorized_keys
+       > Paste public key to it
+
+       > Restrict access to it
+       chmod 600 ~/.ssh/authorized_keys
+
+       > its installed now exit and try again
+    
+> Disable Password Authentication    
+    sudo nano /etc/ssh/sshd_config
+
+    > Make below changes in that file
+    PasswordAuthentication no
+    PubkeyAuthentication yes
+    ChallengeResponseAuthentication no
+
+    > reload ssh deamon
+    sudo systemctl reload sshd
+> Enable ufw ubuntu firewall
+    sudo ufw allow OpenSSH
+    sudo ufw enable
+    sudo ufw status
+
+> Allow from specific ip
+    sudo ufw allow from 27.124.60.90 
+    sudo ufw allow from 27.124.60.90 to any port 22
+    sudo ufw allow from 103.250.188.226  
+    sudo ufw allow from 103.250.188.226  to any port 22
+
+> Delete firewall rule 
+    sudo ufw status numbered
+    sudo ufw delete 1
+
+> Add swap partition 
+    > check for swap partition
+        sudo swapon --show
+    > Check Memory Space
+        free -h
+    > Check HDD Space
+        df -h
+    > Create swap file
+        sudo fallocate -l 2G /swapfile
+        > varify it with
+            ls -lh /swapfile
+        > enable swap file
+            sudo chmod 600 /swapfile
+            sudo mkswap /swapfile
+            sudo swapon /swapfile
+    > Make swap file permenant
+        sudo cp /etc/fstab /etc/fstab.bak
+        echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+> Set swappiness to 10 and Cache Pressure to 10
+    sudo nano /etc/sysctl.conf
+    > add line to it : 
+        vm.swappiness=10
+        vm.vfs_cache_pressure=50
+
+
 --------- Install Nodejs 6.10.x -----------
 
 curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
@@ -17,11 +108,8 @@ make test
 sudo make install
 
 
-cd util 
+cd utils 
 sudo ./install_server.sh // init redis server
-
---------- Install Sailsjs -----------
-npm install sails -g
 
 --------- Install mongodb --------
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
@@ -29,19 +117,63 @@ echo "deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb
 sudo apt-get update
 sudo apt-get install mongodb-org
 
-mkdir /data
-mkdir /data/db
-mongod --fork --logpath ~/log/mongodb.log
+
+
+sudo systemctl start mongod
+sudo systemctl enable mongodb
+
+mongo
+    use admin
+    db.createUser(
+        {
+            user: "AdminSammy",
+            pwd: "AdminSammy'sSecurePassword",
+            roles: [ { role: "userAdminAnyDatabase", db: "admin" } ]
+        }
+    )
+
+sudo nano /etc/mongod.conf
+> add blow line to enable security
+    . . .
+    security:   // it should have no space before
+      authorization: "enabled"  // it should indent with only two space
+    . . . 
+
+sudo nano /etc/mongod.conf
+> add private ip
+. . . 
+net:
+  port: 27017
+  bindIp: 127.0.0.1,10.131.17.227
+ . . .
+
+
+sudo ufw allow from 10.131.38.120 to any port 27017
+sudo ufw allow from 46.101.52.246 to any port 27017
+
+mongo --port 27017 -u "AdminSammy" -p "AdminSammy'sSecurePassword" --authenticationDatabase "admin"
+
+mongo --port 27017 -u "teemweb" -p "teem12345" --authenticationDatabase "teemweb"
+use teemweb
+db.dropDatabase();
+
+mongod --config /etc/mongod.conf //----- To Debug
+
+#mkdir /data
+#mkdir /data/db
+#mongod --fork --logpath ~/log/mongodb.log
 
 mongo
 use teemweb
 
+--------- Install Sailsjs -----------
+npm install sails -g
 
 //--------- for bcrypt
 sudo apt-get update          // might not neede
 sudo apt-get install bcrypt  // might not neede
 
-npm install -g node-gyp
+sudo npm install -g node-gyp
 sudo apt-get install python-minimal
 
 
@@ -49,15 +181,20 @@ sudo apt-get install python-minimal
  npm install pm2@latest -g
 
 
+//----------------------------------------
+sudo apt-get install pkg-config
+sudo apt-get install autoconf g++ make openssl libssl-dev libcurl4-openssl-dev pkg-config libsasl2-dev libpcre3-dev
+sudo apt-get install openssl
+
 //---------- Install apach2 -------
 sudo apt-get install apache2
 
 for .htaccess to work
 
-a2enmod rewrite  // Enable mode rewrite for htaccess
+sudo a2enmod rewrite  // Enable mode rewrite for htaccess
 
 
-replace this to /etc/apache2/apache2.conf
+sudo nano /etc/apache2/apache2.conf
 
 <Directory /var/www/>
     Options Indexes FollowSymLinks
@@ -67,7 +204,6 @@ replace this to /etc/apache2/apache2.conf
 
 
 //------------
-sudo a2enmod mod_xml2enc
 sudo a2enmod proxy_http xml2enc
 
 sudo a2enmod proxy
@@ -130,4 +266,90 @@ pecl config-set php_ini /etc/php/5.6/apache2/php.ini
 
 sudo pecl install mongodb
 
+sudo apt-get install zip unzip php5.6-zip
+
 //------------ After this install composer globally - get instruction from composer website itself
+
+sudo ufw allow http
+sudo ufw allow https
+sudo ufw allow ftp
+
+chown -R $USER:www-data /var/www/html
+chmod -R 640 *
+
+//---------- Git Setup Laravel ----------
+
+git@27.124.60.90:chintan/TeemLaravel.git
+
+git init .
+git remote add -t \* -f origin git@27.124.60.90:chintan/TeemLaravel.git
+git checkout -f master
+
+git remote set-url origin git@27.124.60.90:chintan/TeemLaravel.git
+
+//---------- Git Setup Sails ----------
+git@27.124.60.90:chintan/TeemLaravel.git
+
+git init .
+git remote add -t \* -f origin git@27.124.60.90:chintan/TeemSailsjs.git
+git checkout -f master
+
+git remote set-url origin git@27.124.60.90:chintan/TeemSailsjs.git
+
+//------ Reset mongo permission 
+cd /var/log/mongodb
+sudo chown -R mongodb:mongodb .
+cd /var/lib/mongodb
+sudo chown -R mongodb:mongodb .
+
+//------ Allow access to /var/log
+sudo usermod -aG adm teemweb
+sudo usermod -aG www-data teemweb
+sudo usermod -a -G www-data  vgite
+sudo useradd -g www-data $USER
+
+//------ To enable Private networking
+Follow this link
+https://www.digitalocean.com/community/tutorials/how-to-enable-digitalocean-private-networking-on-existing-droplets
+
+> add net.ifnames=0
+    sudo nano /etc/default/grub.d/50-cloudimg-settings.cfg
+
+    . . .
+    GRUB_CMDLINE_LINUX_DEFAULT="console=tty1 console=ttyS0 net.ifnames=0"
+    . . .
+
+    sudo update-grub
+    sudo reboot
+> to add inter face
+     sudo ifconfig -a
+
+     sudo nano /etc/network/interfaces.d/50-cloud-init.cfg
+
+     auto eth1
+     iface eth1 inet static
+        address 10.131.17.227
+        netmask 255.255.0.0
+
+     sudo shutdown -r now
+
+
+
+//-------- SSL Notes ---------
+
+Follow instructions here: https://certbot.eff.org/#ubuntuxenial-apache
+
+Created an SSL vhost at /etc/apache2/sites-available/000-default-le-ssl.conf
+Deploying Certificate for teemplayersapp.com to VirtualHost /etc/apache2/sites-available/000-default-le-ssl.conf
+Enabling available site: /etc/apache2/sites-available/000-default-le-ssl.conf
+
+Redirecting vhost in /etc/apache2/sites-available/000-default.conf 
+    to ssl vhost in /etc/apache2/sites-available/000-default-le-ssl.conf
+
+/etc/letsencrypt/live/teemplayersapp.com/fullchain.pem
+
+add Teemweb user in root group to access folder /etc/letsencrypt/live
+
+    sudo usermod -aG root teemweb
+
+Test at: https://www.ssllabs.com/ssltest/analyze.html?d=teemplayersapp.com

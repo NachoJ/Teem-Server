@@ -11,6 +11,7 @@ module.exports = {
 
 		async.series([
 				function(scCb) {
+					
 					Sportcenter.findOneById(reqData.scid).exec(function(err, scData) {
 						if (err) {
 							res.serverError(err);
@@ -49,7 +50,6 @@ module.exports = {
 
 					Match.create(reqData).exec(function(err, matchData) {
 						if (err) {
-
 							var errmsg = [];
 							if (err.Errors) {
 								var arrErrors = err.Errors;
@@ -764,9 +764,9 @@ module.exports = {
 						return teamCb({ error: "Somthing went wrong.Please try again" });
 					}
 
-					 actJsn = {
+					actJsn = {
 						userid: result.userid,
-						onactivityid:result.matchid,
+						onactivityid: result.matchid,
 						activitydate: result.createdAt,
 						activitytype: "joined match",
 						onitem: "match"
@@ -866,7 +866,7 @@ module.exports = {
 						teamDelResult = result;
 						var actJsn = {
 							userid: result[0].userid,
-							onactivityid:result[0].matchid,
+							onactivityid: result[0].matchid,
 							activitydate: new Date(),
 							activitytype: "leaved match",
 							onitem: "match"

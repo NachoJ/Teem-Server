@@ -85,6 +85,27 @@ module.exports = {
 				});
 			});
 		});
+	},
+
+	connectSocket: function(req, res) {
+		var userid = req.param("userid");
+		//console.log("userid",userid);
+
+		User.findOneById(userid).exec(function(err, result) {
+			if (err)
+				return res.serverError(err);
+
+			if (typeof result == "undefined")
+				return res.badRequest({ error: "User not found" });
+
+			User.update({ id: userid }, { isonline: true }).exec(function(err, updateresult) {
+				
+				User.subscribe(req, result, ['message']);
+				User.watch(req);
+
+				res.ok();
+			});
+		});
 	}
 
 };

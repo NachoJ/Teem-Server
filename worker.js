@@ -39,7 +39,7 @@
 
 
 var sails = require('sails'),
-    Job   = require('kue').Job;
+	Job = require('kue').Job;
 
 /**
  * Lift sails without starting the server
@@ -53,10 +53,20 @@ var sails = require('sails'),
  * so that Sails won't warn us about an unusually long 
  * bootstrapping time.
  */
-
 sails.lift({
-  worker: true,
-  bootstrapTimeout: 60*60*24*365
+	worker: true,
+	bootstrapTimeout: 60 * 60 * 24 * 365
+}, function(err) {
+	if (err) {
+		console.log('Error occurred lifting Sails app:', err);
+		return;
+	}
+
+	// --•
+	console.log('Sails app lifted successfully!');
+	console.log("sails.config.models.connection: "+sails.config.models.connection);
+	//console.log("\nsails.config.siteName: " + sails.config.siteName + "\n");
+
 });
 
 
@@ -65,21 +75,21 @@ sails.lift({
  */
 
 var logJobs = function() {
-  Jobs
-    .on('job complete', function (id) {
-      Job.get(id, function (err, job){
-        if (err) return;
-        sails.log.info( 'Job \'' + job.type + '\' (ID: ' + id + ') completed successfully.' );
-      });
-    })
-    .on('job failed', function (id) {
-      Job.get(id, function (err, job){
-        if (err) return;
-        console.log(job._error);
-        console.log("\n");
-        sails.log.warn( 'Job \'' + job.type + '\' (ID: ' + id + ') failed. Error: ' + job._error );
-      });        
-    });
+	Jobs
+		.on('job complete', function(id) {
+			Job.get(id, function(err, job) {
+				if (err) return;
+				sails.log.info('Job \'' + job.type + '\' (ID: ' + id + ') completed successfully.');
+			});
+		})
+		.on('job failed', function(id) {
+			Job.get(id, function(err, job) {
+				if (err) return;
+				console.log(job._error);
+				console.log("\n");
+				sails.log.warn('Job \'' + job.type + '\' (ID: ' + id + ') failed. Error: ' + job._error);
+			});
+		});
 }
 
 
@@ -89,9 +99,9 @@ var logJobs = function() {
  */
 
 var startProcessors = function() {
-  for (var identity in Jobs._processors) {
-    Jobs.process( identity, Jobs._processors[identity] );
-  }
+	for (var identity in Jobs._processors) {
+		Jobs.process(identity, Jobs._processors[identity]);
+	}
 }
 
 

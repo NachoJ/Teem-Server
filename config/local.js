@@ -81,19 +81,12 @@ module.exports = {
 	 ***************************************************************************/
 
 	// environment: process.env.NODE_ENV || 'development'
-	mail: {
-		from: {
-			name: "Teem",
-			email: "info@teem.com"
-		}
-	},
-	siteUrl: 'http://localhost:4200',
-	siteName: "Teem Players",
+
 	paths: {
-    public: __dirname + "/../assets",
-	userImageUploadPath: '../../assets/upload/profiles',
-	sportFile: __dirname + "/../assets/sport.json",
-	currencyFile: __dirname + "/../assets/currency.json",
-	sportPlayerFile: __dirname + "/../assets/sportplayer.json"
-  },
+		public: __dirname + "/../assets",
+		userImageUploadPath: '../../assets/upload/profiles',
+		sportFile: __dirname + "/../assets/sport.json",
+		currencyFile: __dirname + "/../assets/currency.json",
+		sportPlayerFile: __dirname + "/../assets/sportplayer.json"
+	},
 };

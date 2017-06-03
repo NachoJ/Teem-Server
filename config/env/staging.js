@@ -22,7 +22,7 @@ module.exports = {
 	},
 
 	siteUrl: 'http://localhost:4200',
-	siteName: "Teem Players Local",
+	siteName: "Teem Players Staging",
 
     mail: {
         useremail: 'ankurgarach4@gmail.com',
@@ -31,6 +31,6 @@ module.exports = {
 			name: "Teemweb Development",
 			email: "ankurgarach4@gmail.com"
 		}
-	},
-	mode:"development"	
+	}
+    
 };

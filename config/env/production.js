@@ -12,27 +12,41 @@
 
 module.exports = {
 
-  /***************************************************************************
-   * Set the default database connection for models in the production        *
-   * environment (see config/connections.js and config/models.js )           *
-   ***************************************************************************/
+	/***************************************************************************
+	 * Set the default database connection for models in the production        *
+	 * environment (see config/connections.js and config/models.js )           *
+	 ***************************************************************************/
 
-  // models: {
-  //   connection: 'someMysqlServer'
-  // },
+	models: {
+		connection: 'mongoLive'
+	},
 
-  /***************************************************************************
-   * Set the port in the production environment to 80                        *
-   ***************************************************************************/
+	siteUrl: 'https://teemplayersapp.com',
+	siteName: "Teem Players",
 
-  // port: 80,
+    mail: {
+        useremail: 'teemplayers@teemplayers.com',
+		password: 'Candidato98S12',
+		from: {
+			name: "Teem Players",
+			email: "info@teemplayers.com"
+		}
+	},
+	
+	mode:"production",
+	
+	/***************************************************************************
+	 * Set the port in the production environment to 80                        *
+	 ***************************************************************************/
 
-  /***************************************************************************
-   * Set the log level in production environment to "silent"                 *
-   ***************************************************************************/
+	// port: 80,
 
-  // log: {
-  //   level: "silent"
-  // }
+	/***************************************************************************
+	 * Set the log level in production environment to "silent"                 *
+	 ***************************************************************************/
+
+	// log: {
+	// 	level: "silent"
+	// }
 
 };

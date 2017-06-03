@@ -20,7 +20,44 @@
  * http://sailsjs.org/#!/documentation/concepts/Routes/RouteTargetSyntax.html
  */
 
-module.exports.routes = {
+var ROUTE_PREFIX = "/sailsapi";
+
+function addGlobalPrefix(routes) {
+	var paths = Object.keys(routes),
+		newRoutes = {};
+
+	if (ROUTE_PREFIX === "") {
+		return routes;
+	}
+
+	paths.forEach(function(path) {
+		var pathParts = path.split(" "),
+			uri = pathParts.pop(),
+			prefixedURI = "",
+			newPath = "";
+
+		prefixedURI = ROUTE_PREFIX + uri;
+
+		pathParts.push(prefixedURI);
+
+		newPath = pathParts.join(" ");
+		// construct the new routes
+		newRoutes[newPath] = routes[path];
+	});
+
+
+    //This automatically serves all routes, apart from /api/** routes to ember
+    //(which will be initialized in assets/index.html). This route needs to be
+    //at the very bottom if you want to server other routes through Sails, because they are matched in order
+    newRoutes['/*'] = { controller: 'AngularServeController', action: 'serve', skipAssets: true, skipRegex: /^\/sailsapi\/.*$/ }
+
+    // console.log("New Routes");
+    // console.log(newRoutes);
+
+	return newRoutes;
+};
+
+module.exports.routes = addGlobalPrefix({
 
 	/***************************************************************************
 	 *                                                                          *
@@ -53,7 +90,7 @@ module.exports.routes = {
 		controller: "AuthController",
 		action: "ForgotPassword",
 	},
-	"get /auth/useractivation/:activationlink": {
+	"post /auth/useractivation": {
 		controller: "AuthController",
 		action: "UserActivation",
 	},
@@ -280,7 +317,50 @@ module.exports.routes = {
 		controller:"SearchController",
 		action:"sportcenterSearchDetail"
 	},
+	"get /sportcenter/match/:scid":{
+		controller:"SearchController",
+		action:"matchPlayedSportcenter"
+	},
+	"get /upcoming/match/:scid":{
+		controller:"SearchController",
+		action:"UpcomingSportcenterMatch"
+	},
+	"get /organised/match/:userid":{
+		controller:"SearchController",
+		action:"matchOrganised"
+	},
+	"get /played/match/:userid":{
+		controller:"SearchController",
+		action:"matchPlayed"
+	},
+	
 
+
+	"get /user/message/:userid/:profileid":{
+		controller:"ChatuserController",
+		action:"privateMessageDisplay"
+	},
+	"post /user/message":{
+		controller:"ChatuserController",
+		action:"privateMessageCreate"
+	},
+	"get /user/socket/:userid":{
+		controller:"UserController",
+		action:"connectSocket"
+	},
+	"get /user/type/:userid/:senderid":{
+		controller:"ChatuserController",
+		action:"userTypingMessage"
+	},
+	"get /user/unread/:userid":{
+		controller:"ChatuserController",
+		action:"unreadMessageCount"
+	},
+	"get /user/read/:userid":{
+		controller:"ChatuserController",
+		action:"readPrivateUserMessage"
+	},
+	
 
 	"post /user/followers":{
 		controller:"SearchController",
@@ -301,9 +381,9 @@ module.exports.routes = {
 	"get /following/:userid":{
 		controller:"SearchController",
 		action:"userFollowing"
-	}
+	},
 
-	
+	  
 	/***************************************************************************
 	 *                                                                          *
 	 * Custom routes here...                                                    *
@@ -314,4 +394,4 @@ module.exports.routes = {
 	 *                                                                          *
 	 ***************************************************************************/
 
-};
+});
