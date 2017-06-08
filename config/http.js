@@ -8,6 +8,7 @@
  * For more information on configuration, check out:
  * http://sailsjs.org/#!/documentation/reference/sails.config/sails.config.http.html
  */
+var StringDecoder = require('string_decoder').StringDecoder;
 
 module.exports.http = {
 
@@ -64,34 +65,40 @@ module.exports.http = {
 
 				var chunks = [];
 
-				
-					res.write = function(chunk) {
+
+				res.write = function(chunk) {
+					chunks.push(new Buffer(chunk));
+					oldWrite.apply(res, arguments);
+				};
+				res.end = function(chunk) {
+					chunks = [];
+					if (chunk)
 						chunks.push(new Buffer(chunk));
-						oldWrite.apply(res, arguments);
-					};
-					res.end = function(chunk) {
-						chunks = [];
-						if (chunk)
-							chunks.push(new Buffer(chunk));
 
-						var body = Buffer.concat(chunks).toString('utf8');
-						console.log("---------------");
-						console.log(req.path, body);
+					var body = Buffer.concat(chunks).toString('utf8');
+					//	console.log("---------------");
+					//	console.log(req.path, body);
+					//console.log("body", body);
+					if (body) {
+						var decoder = new StringDecoder('utf8');
 
-						var activityObj = JSON.parse(body);
-						//console.log("activityObj",activityObj);
+						var activityObj = decoder.write(body);
+						//console.log("activityObj", activityObj);
+
+						activityObj = JSON.parse(activityObj);
+
 						activityObj = activityObj.activity;
-						
-						if (activityObj) {
-								Activity.create(activityObj).exec(function(err, result) {
-									if (err)
-										return console.log("Activity error==>", err);
-								});
-						}
 
-						oldEnd.apply(res, arguments);
-					};
-				
+						if (activityObj) {
+							Activity.create(activityObj).exec(function(err, result) {
+								if (err)
+									return console.log("Activity error==>", err);
+							});
+						}
+					}
+					oldEnd.apply(res, arguments);
+				};
+
 			}
 			next();
 		},

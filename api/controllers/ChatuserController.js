@@ -10,7 +10,7 @@ module.exports = {
 		var userResult;
 		var userData = [];
 		var userId = [];
-		var chatArr=[];
+		var chatArr = [];
 		var chatData;
 
 		async.series([
@@ -48,14 +48,22 @@ module.exports = {
 					});
 				},
 				function(idCb) {
-					Chat_User.find({ receiveruserid: userids }).exec(function(err, result) {
+					Chat_User.find({ $or: [{ receiveruserid: userids }, { senderuserid: userids }] }).exec(function(err, result) {
 						if (err)
 							return res.serverError(err);
 
 						result.forEach(function(index) {
-							var id = index.senderuserid;
-							userId.push(id);
+							if (index.senderuserid != userids) {
+								var id = index.senderuserid;
+								userId.push(id);
+							}
+
+							if (index.senderuserid == userids) {
+								var id = index.receiveruserid;
+								userId.push(id);
+							}
 						});
+
 						userId = _$.uniq(userId, false);
 
 						//console.log("chatData",chatData);
@@ -63,7 +71,7 @@ module.exports = {
 
 					});
 				},
-				function(chatCb){
+				function(chatCb) {
 					Chat_User.find({ $or: [{ senderuserid: userids }, { receiveruserid: userids }] }).exec(function(err, result) {
 						if (err)
 							return res.serverError(err);
@@ -74,7 +82,7 @@ module.exports = {
 
 						// });
 
-						chatData=result;
+						chatData = result;
 
 						chatCb();
 
@@ -88,19 +96,19 @@ module.exports = {
 
 						result.forEach(function(index) {
 							index['count'] = 0;
-							var chat=[];
+							var chat = [];
 							if (userData[index.id])
 								index['count'] = userData[index.id];
 
-							chatData.forEach(function(indexchat){
+							chatData.forEach(function(indexchat) {
 								//console.log("index",index);
-								if(indexchat.senderuserid==index.id || indexchat.receiveruserid==index.id){
+								if (indexchat.senderuserid == index.id || indexchat.receiveruserid == index.id) {
 									//console.log("insert");
 									chat.push(indexchat);
 								}
 							});
-									
-									index['chatdata']=chat;
+
+							index['chatdata'] = chat;
 						});
 
 						userResult = result;
@@ -122,16 +130,16 @@ module.exports = {
 		var userid = req.param("userid");
 		var profileid = req.param("profileid");
 		var chatData;
-		console.log("userid",userid);
-		console.log("profileid",profileid);
-		
+		console.log("userid", userid);
+		console.log("profileid", profileid);
+
 		async.series([
 				function(seenCb) {
 					Chat_User.update({ receiveruserid: userid, senderuserid: profileid }, { isread: true }).exec(function(err, result) {
 						if (err)
 							return res.serverError(err);
 
-						console.log("result update",result);
+						console.log("result update", result);
 						seenCb();
 					});
 				},
@@ -160,7 +168,7 @@ module.exports = {
 
 	privateMessageCreate: function(req, res) {
 		var reqData = eval(req.body);
-		var userChat;
+		var userChat, senderUser;
 		//console.log("reqData", reqData);
 		async.series([
 				function(chatCb) {
@@ -186,13 +194,13 @@ module.exports = {
 
 					});
 				},
-				function(userCb) {
-					User.findOneById(reqData.receiveruserid).exec(function(err, result) {
+				function(senderUserCb) {
+					User.findOneById(reqData.senderuserid).exec(function(err, result) {
 						if (err)
 							return res.serverError(err);
 
 						if (typeof result == "undefined")
-							return userCb({ error: "user not found" });
+							return senderUserCb({ error: "user not found" });
 
 						var DataObj = {
 							username: result.username,
@@ -201,26 +209,73 @@ module.exports = {
 							id: result.id,
 							profileimage: result.profileimage
 						};
+						//senderUser = DataObj;
 
-						//userChat.receiveruserid = DataObj;
-
-						// sender message create
 						User.message(userChat.senderuserid, {
 							from: userChat.senderuserid,
 							msg: userChat,
-							senttouser: userChat.receiveruserid
+							senttouser: ""
 						});
 
 						// received user message	
 						User.message(userChat.receiveruserid, {
 							from: userChat.senderuserid,
 							msg: userChat,
-							senttouser: ""
+							senttouser: DataObj
 						});
-
-						userCb();
+						senderUserCb();
 					});
-				}
+				},
+				// function(userCb) {
+				// 	User.message(userChat.senderuserid, {
+				// 		from: userChat.senderuserid,
+				// 		msg: userChat,
+				// 		senttouser: ""
+				// 	});
+
+				// 	// received user message	
+				// 	User.message(userChat.receiveruserid, {
+				// 		from: userChat.senderuserid,
+				// 		msg: userChat,
+				// 		senttouser: senderUser
+				// 	});
+
+				// 	userCb();
+				// 	return;
+				// 	// User.findOneById(reqData.receiveruserid).exec(function(err, result) {
+				// 	// 	if (err)
+				// 	// 		return res.serverError(err);
+
+				// 	// 	if (typeof result == "undefined")
+				// 	// 		return userCb({ error: "user not found" });
+
+				// 	// 	var DataObj = {
+				// 	// 		username: result.username,
+				// 	// 		firstname: result.firstname,
+				// 	// 		lastname: result.lastname,
+				// 	// 		id: result.id,
+				// 	// 		profileimage: result.profileimage
+				// 	// 	};
+
+				// 	// 	//userChat.receiveruserid = DataObj;
+
+				// 	// 	// sender message create
+				// 	// 	User.message(userChat.senderuserid, {
+				// 	// 		from: userChat.senderuserid,
+				// 	// 		msg: userChat,
+				// 	// 		senttouser: ""
+				// 	// 	});
+
+				// 	// 	// received user message	
+				// 	// 	User.message(userChat.receiveruserid, {
+				// 	// 		from: userChat.senderuserid,
+				// 	// 		msg: userChat,
+				// 	// 		senttouser: senderUser
+				// 	// 	});
+
+				// 	// 	userCb();
+				// 	// });
+				// }
 			],
 			function(err, finalResult) {
 				if (err)
@@ -231,19 +286,21 @@ module.exports = {
 	},
 
 	userTypingMessage: function(req, res) {
-		var userid = req.param("userid");
+		var receiverid = req.param("userid");
 		var senderid = req.param("senderid");
+		console.log("userid", userid);
+		console.log("senderid", senderid);
 
 		User.findOneById(senderid).exec(function(err, result) {
 			if (err) {
 				res.serverError(err);
 				return;
 			}
-			if (typeof sender == "undefined")
+			if (typeof result == "undefined")
 				return res.badRequest({ error: "User not found" });
 
-			User.message(userid, {
-				from: result,
+			User.message(receiverid, {
+				from: result['id'],
 				usertyping: true
 			});
 
@@ -254,12 +311,13 @@ module.exports = {
 
 	readPrivateUserMessage: function(req, res) {
 		var userid = req.param("userid");
+		var profileUserId = req.param("profileid");
 
-		Chat_User.update({ receiveruserid: userid }, { isseen: true, isread: true }).exec(function(err, result) {
+		Chat_User.update({ receiveruserid: userid, senderuserid: profileUserId, isread: false }, { isread: true, isseen: true }).exec(function(err, result) {
 			if (err)
 				return res.serverError(err);
 
-			res.ok();
+			res.ok("read");
 		});
 	}
 

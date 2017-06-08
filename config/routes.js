@@ -356,11 +356,11 @@ module.exports.routes = addGlobalPrefix({
 		controller:"ChatuserController",
 		action:"unreadMessageCount"
 	},
-	"get /user/read/:userid":{
+	"get /user/read/:userid/:profileid":{
 		controller:"ChatuserController",
 		action:"readPrivateUserMessage"
 	},
-	
+
 
 	"post /user/followers":{
 		controller:"SearchController",
